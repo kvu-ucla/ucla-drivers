@@ -3,9 +3,9 @@ version: 1.0.0
 
 # Add your driver dependencies here.
 dependencies:
-  # Required for compiling and testing ACAEngine drivers
-  engine-driver:
-    github: aca-labs/crystal-engine-driver
+  # Required for compiling and testing PlaceOS drivers
+  driver:
+    github: placeos/driver
     branch: master
 
   # Feel free to remove this dependency. Used for testing,
