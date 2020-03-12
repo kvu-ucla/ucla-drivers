@@ -7,4 +7,9 @@ class Place::PrivateHelper < PlaceOS::Driver
     logger.debug("this will be propagated to backoffice!")
     "you can delete this file"
   end
+
+  def echo(input : String)
+    logger.debug(input)
+    input
+  end
 end
