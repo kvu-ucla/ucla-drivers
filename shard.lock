@@ -2,7 +2,7 @@ version: 1.0
 shards:
   ameba:
     github: crystal-ameba/ameba
-    version: 0.11.0
+    version: 0.12.0
 
   base62:
     github: Sija/base62.cr
@@ -26,7 +26,7 @@ shards:
 
   driver:
     github: placeos/driver
-    commit: 25f596a36cf291f489e5df0c3f862a40670a12f8
+    commit: aa31d08b18d5c4812cc3307b8af4da2d5307f715
 
   etcd:
     github: aca-labs/crystal-etcd
