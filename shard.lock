@@ -26,11 +26,11 @@ shards:
 
   driver:
     github: placeos/driver
-    commit: aa31d08b18d5c4812cc3307b8af4da2d5307f715
+    commit: d02fde5cddbe1d1a9ed388d84d84c0c858e57d98
 
   etcd:
     github: aca-labs/crystal-etcd
-    version: 0.3.1
+    version: 0.3.2
 
   habitat:
     github: luckyframework/habitat
@@ -72,9 +72,9 @@ shards:
     github: caspiano/rendezvous-hash
     version: 0.3.1
 
-  retriable:
-    github: sija/retriable.cr
-    version: 0.2.0
+  simple_retry:
+    github: spider-gazelle/simple_retry
+    version: 1.0.0
 
   ssh2:
     github: spider-gazelle/ssh2.cr
