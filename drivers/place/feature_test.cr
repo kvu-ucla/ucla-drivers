@@ -65,13 +65,14 @@ class Place::AcidTest < PlaceOS::Driver
 
   # Tests for security
   @[Security(Level::Administrator)]
-  def perform_task(name : String | Int32)
-    logger.fatal "Admin level function called"
+  def perform_admin_task(name : String | Int32)
+    logger.fatal "Admin level function called with #{name}"
   end
 
   @[Security(Level::Support)]
   def perform_task(name : String | Int32)
-    logger.error "Support level function called"
+  def perform_support_task(name : String | Int32)
+    logger.error "Support level function called with #{name}"
   end
 
   # Timer tests
