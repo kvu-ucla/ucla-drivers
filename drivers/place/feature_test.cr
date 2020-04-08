@@ -36,6 +36,7 @@ class Place::AcidTest < PlaceOS::Driver
 
   def on_update
     @name = setting?(String, :name) || "Acid test"
+    self[:name] = @name
   end
 
   # Calling remote functions
