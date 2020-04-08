@@ -70,7 +70,6 @@ class Place::AcidTest < PlaceOS::Driver
   end
 
   @[Security(Level::Support)]
-  def perform_task(name : String | Int32)
   def perform_support_task(name : String | Int32)
     logger.error "Support level function called with #{name}"
   end
