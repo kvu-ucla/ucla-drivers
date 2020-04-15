@@ -5,7 +5,7 @@ class Place::AcidTest < PlaceOS::Driver
   generic_name :Testing
 
   default_settings({
-    name: "Acid test"
+    name: "Acid test",
   })
 
   accessor helper : Helper
@@ -15,17 +15,17 @@ class Place::AcidTest < PlaceOS::Driver
   @ready : Int32 = 0
 
   def on_load
-    subscribe(:timer_count) do |subscription, new_value|
+    subscribe(:timer_count) do |_subscription, new_value|
       # values are always raw JSON strings
       sub_data(new_value)
     end
 
-    monitor(:acid_test_data) do |subscription, new_value|
+    monitor(:acid_test_data) do |_subscription, new_value|
       # values are always raw strings
       channel_data(new_value)
     end
 
-    system.load_complete do |subscription, new_value|
+    system.load_complete do |_subscription, _new_value|
       @ready = @ready &+ 1
       self[:ready_called] = @ready
       nil

@@ -1,4 +1,3 @@
-
 class PrivateHelper < DriverSpecs::MockDriver
   def used_for_place_testing
     logger.debug("this will be propagated to backoffice!")
@@ -13,7 +12,7 @@ end
 
 DriverSpecs.mock_driver "Place::AcidTest" do
   system({
-    Helper: {PrivateHelper}
+    Helper: {PrivateHelper},
   })
 
   # Test calling other drivers
