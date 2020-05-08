@@ -1,8 +1,12 @@
 version: 1.0
 shards:
+  action-controller:
+    github: spider-gazelle/action-controller
+    version: 3.1.0
+
   ameba:
     github: crystal-ameba/ameba
-    version: 0.12.0
+    version: 0.12.1
 
   base62:
     github: Sija/base62.cr
@@ -24,13 +28,21 @@ shards:
     github: Sija/debug.cr
     version: 1.1.0
 
+  delimiter_tree:
+    github: drujensen/delimiter_tree
+    version: 0.1.4
+
   driver:
     github: placeos/driver
-    commit: 334dc0c9a7019ccea320fad62ee424a88fad3903
+    version: 2.0.2
 
   etcd:
-    github: aca-labs/crystal-etcd
-    version: 0.4.0
+    github: place-labs/crystal-etcd
+    version: 1.0.1
+
+  future:
+    github: crystal-community/future.cr
+    version: 0.1.0
 
   habitat:
     github: luckyframework/habitat
@@ -38,11 +50,15 @@ shards:
 
   hound-dog:
     github: place-labs/hound-dog
-    version: 2.1.0
+    version: 2.3.2
 
   ipaddress:
     github: Sija/ipaddress.cr
     version: 0.2.1
+
+  log_helper:
+    github: spider-gazelle/log_helper
+    version: 0.1.2
 
   murmur3:
     github: aca-labs/murmur3
@@ -82,13 +98,13 @@ shards:
 
   tasker:
     github: spider-gazelle/tasker
-    version: 1.2.2
+    version: 1.3.0
 
   tokenizer:
     github: spider-gazelle/tokenizer
     version: 1.1.0
 
   ulid:
-    github: aca-labs/ulid
+    github: place-labs/ulid
     version: 0.1.2
 

@@ -47,16 +47,16 @@ class Place::AcidTest < PlaceOS::Driver
 
   # Subscription monitoring
   private def sub_data(incoming)
-    logger.info "Received on subscription: #{incoming}"
+    logger.info { "Received on subscription: #{incoming}" }
   end
 
   private def channel_data_changed(subscription, new_value)
-    logger.info "Received on channel data subscription: #{new_value}"
+    logger.info { "Received on channel data subscription: #{new_value}" }
   end
 
   # Channel monitoring
   private def channel_data(incoming)
-    logger.info "Received on channel: #{incoming}"
+    logger.info { "Received on channel: #{incoming}" }
     self[:channel_data] = incoming
   end
 
@@ -67,12 +67,12 @@ class Place::AcidTest < PlaceOS::Driver
   # Tests for security
   @[Security(Level::Administrator)]
   def perform_admin_task(name : String | Int32)
-    logger.fatal "Admin level function called with #{name}"
+    logger.fatal { "Admin level function called with #{name}" }
   end
 
   @[Security(Level::Support)]
   def perform_support_task(name : String | Int32)
-    logger.error "Support level function called with #{name}"
+    logger.error { "Support level function called with #{name}" }
   end
 
   # Timer tests
@@ -90,7 +90,7 @@ class Place::AcidTest < PlaceOS::Driver
 
   def timer_fired!
     @timer_count += 1
-    logger.warn "Timer fired #{@timer_count}"
+    logger.warn { "Timer fired #{@timer_count}" }
     self[:timer_count] = @timer_count
   end
 end
