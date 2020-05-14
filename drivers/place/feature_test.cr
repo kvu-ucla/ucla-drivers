@@ -46,11 +46,11 @@ class Place::AcidTest < PlaceOS::Driver
   end
 
   # Subscription monitoring
-  private def sub_data(incoming)
+  private def sub_data(incoming) : Nil
     logger.info { "Received on subscription: #{incoming}" }
   end
 
-  private def channel_data_changed(subscription, new_value)
+  private def channel_data_changed(subscription, new_value) : Nil
     logger.info { "Received on channel data subscription: #{new_value}" }
   end
 
@@ -66,12 +66,12 @@ class Place::AcidTest < PlaceOS::Driver
 
   # Tests for security
   @[Security(Level::Administrator)]
-  def perform_admin_task(name : String | Int32)
+  def perform_admin_task(name : String | Int32) : Nil
     logger.fatal { "Admin level function called with #{name}" }
   end
 
   @[Security(Level::Support)]
-  def perform_support_task(name : String | Int32)
+  def perform_support_task(name : String | Int32) : Nil
     logger.error { "Support level function called with #{name}" }
   end
 
