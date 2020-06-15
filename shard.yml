@@ -1,12 +1,12 @@
 name: private-drivers
-version: 1.1.0
+version: 1.2.0
 
 # Add your driver dependencies here.
 dependencies:
   # Required for compiling and testing PlaceOS drivers
-  driver:
+  placeos-driver:
     github: placeos/driver
-    version: ~> 2.0
+    version: ~> 3.0
 
   # Feel free to remove this dependency. Used for testing,
   base62:
