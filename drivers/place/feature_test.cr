@@ -93,4 +93,11 @@ class Place::AcidTest < PlaceOS::Driver
     logger.warn { "Timer fired #{@timer_count}" }
     self[:timer_count] = @timer_count
   end
+
+  def webhook_check(method : String, headers : Hash(String, Array(String)), body : String)
+    logger.info { "received #{method},\nheaders #{headers},\nbody #{body}" }
+
+    # Return a response with a header
+    {body.size > 5 ? 200 : 400, {"X-Custom-Header" => method}}
+  end
 end
