@@ -98,6 +98,6 @@ class Place::AcidTest < PlaceOS::Driver
     logger.info { "received #{method},\nheaders #{headers},\nbody #{body}" }
 
     # Return a response with a header
-    {body.size > 5 ? 200 : 400, {"X-Custom-Header" => method}}
+    {body.size > 5 ? 200 : 400, {"X-Custom-Header" => method}, nil}
   end
 end
