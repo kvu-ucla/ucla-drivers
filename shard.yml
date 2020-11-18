@@ -6,7 +6,6 @@ dependencies:
   # Required for compiling and testing PlaceOS drivers
   placeos-driver:
     github: placeos/driver
-    version: ~> 3.0
 
   # Feel free to remove this dependency. Used for testing,
   base62:
