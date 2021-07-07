@@ -2,23 +2,19 @@ version: 2.0
 shards:
   action-controller:
     git: https://github.com/spider-gazelle/action-controller.git
-    version: 4.2.2
+    version: 4.5.0
 
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
-    version: 0.14.1
+    version: 0.14.3
 
   base62:
     git: https://github.com/sija/base62.cr.git
     version: 0.1.2
 
-  bisect:
-    git: https://github.com/spider-gazelle/bisect.git
-    version: 1.2.1
-
   connect-proxy:
     git: https://github.com/spider-gazelle/connect-proxy.git
-    version: 1.2.1
+    version: 1.4.1
 
   crc16:
     git: https://github.com/maiha/crc16.cr.git
@@ -26,19 +22,23 @@ shards:
 
   cron_parser:
     git: https://github.com/kostya/cron_parser.git
-    version: 0.3.0
+    version: 0.4.0
 
   debug:
     git: https://github.com/sija/debug.cr.git
-    version: 2.0.0
+    version: 2.0.1
+
+  dtls:
+    git: https://github.com/spider-gazelle/crystal-dtls.git
+    version: 0.9.0
 
   etcd:
     git: https://github.com/place-labs/crystal-etcd.git
-    version: 1.1.2
+    version: 1.2.4
 
   future:
     git: https://github.com/crystal-community/future.cr.git
-    version: 0.1.0
+    version: 1.0.0
 
   habitat:
     git: https://github.com/luckyframework/habitat.git
@@ -46,7 +46,7 @@ shards:
 
   hound-dog:
     git: https://github.com/place-labs/hound-dog.git
-    version: 2.6.1
+    version: 2.9.0
 
   ipaddress:
     git: https://github.com/sija/ipaddress.cr.git
@@ -58,7 +58,7 @@ shards:
 
   lucky_router:
     git: https://github.com/luckyframework/lucky_router.git
-    version: 0.4.1
+    version: 0.4.2
 
   murmur3:
     git: https://github.com/aca-labs/murmur3.git
@@ -66,27 +66,23 @@ shards:
 
   placeos-driver:
     git: https://github.com/placeos/driver.git
-    version: 5.0.5
+    version: 5.4.0
 
   pool:
     git: https://github.com/ysbaddaden/pool.git
-    version: 0.2.3
-
-  priority-queue:
-    git: https://github.com/spider-gazelle/priority-queue.git
-    version: 1.0.1
+    version: 0.2.4
 
   promise:
     git: https://github.com/spider-gazelle/promise.git
-    version: 2.2.2
+    version: 2.2.3
 
   redis:
-    git: https://github.com/maiha/crystal-redis.git
-    version: 2.6.0
+    git: https://github.com/stefanwille/crystal-redis.git
+    version: 2.7.0
 
   redis-cluster:
     git: https://github.com/caspiano/redis-cluster.cr.git
-    version: 0.8.4
+    version: 0.8.5
 
   rendezvous-hash:
     git: https://github.com/caspiano/rendezvous-hash.git
@@ -94,7 +90,7 @@ shards:
 
   retriable:
     git: https://github.com/sija/retriable.cr.git
-    version: 0.2.3
+    version: 0.2.4
 
   simple_retry:
     git: https://github.com/spider-gazelle/simple_retry.git
@@ -106,7 +102,7 @@ shards:
 
   tasker:
     git: https://github.com/spider-gazelle/tasker.git
-    version: 2.0.3
+    version: 2.0.5
 
   tokenizer:
     git: https://github.com/spider-gazelle/tokenizer.git
