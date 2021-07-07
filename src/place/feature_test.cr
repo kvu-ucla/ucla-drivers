@@ -1,4 +1,4 @@
-module Place; end
+require "placeos-driver"
 
 class Place::AcidTest < PlaceOS::Driver
   descriptive_name "PlaceOS Acid Test"

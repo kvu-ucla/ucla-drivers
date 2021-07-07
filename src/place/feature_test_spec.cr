@@ -1,3 +1,5 @@
+require "placeos-driver/driver-specs/runner"
+
 class PrivateHelper < DriverSpecs::MockDriver
   def used_for_place_testing
     logger.debug { "this will be propagated to backoffice!" }
