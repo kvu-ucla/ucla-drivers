@@ -1,4 +1,5 @@
-require "placeos-driver"
+module Place; end
+
 require "base62"
 
 class Place::PrivateHelper < PlaceOS::Driver

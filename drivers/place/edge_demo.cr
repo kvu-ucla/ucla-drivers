@@ -1,4 +1,5 @@
-require "placeos-driver"
+module Place; end
+
 require "placeos-driver/interface/powerable"
 require "placeos-driver/interface/muteable"
 require "placeos-driver/interface/switchable"
