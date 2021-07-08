@@ -1,4 +1,4 @@
-require "placeos-driver/driver-specs/runner"
+require "placeos-driver/spec"
 
 class PrivateHelper < DriverSpecs::MockDriver
   def used_for_place_testing

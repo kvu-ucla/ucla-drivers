@@ -1,4 +1,4 @@
-require "placeos-driver/driver-specs/runner"
+require "placeos-driver/spec"
 
 # Manual Compile:
 # export COMPILE_DRIVER=drivers/place/private_helper_spec.cr
