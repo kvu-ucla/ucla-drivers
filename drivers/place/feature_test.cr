@@ -39,6 +39,10 @@ class Place::AcidTest < PlaceOS::Driver
     self[:name] = @name
   end
 
+  def trigger_test(state : Bool)
+    self[:trigger_test] = state
+  end
+
   # Calling remote functions
   def echo(message : String)
     result = helper.echo(message).get
