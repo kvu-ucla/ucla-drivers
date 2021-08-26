@@ -32,7 +32,7 @@ class Place::DispatchExample < PlaceOS::Driver
   def on_update
     keepalive_period = setting?(UInt32, :keepalive_period) || 10
     schedule.clear
-    schedule.in(keepalive_period.seconds) { send_keepalive }
+    schedule.every(keepalive_period.seconds) { send_keepalive }
   end
 
   def disconnected
