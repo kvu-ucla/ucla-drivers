@@ -7,7 +7,7 @@ class Place::DispatchExample < PlaceOS::Driver
   description %(accepts whitelisted connections from external devices for sending events)
 
   # Hookup dispatch to accept incomming connections
-  uri_base "ws://dispatch/api/server/tcp_dispatch?port=2020&accept=192.168.0.1"
+  uri_base "ws://dispatch/api/dispatch/v1/tcp_dispatch?port=2020&accept=192.168.0.1"
 
   default_settings({
     dispatcher_key:   "secret",
