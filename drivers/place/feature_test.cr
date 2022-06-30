@@ -96,6 +96,7 @@ class Place::AcidTest < PlaceOS::Driver
     @timer_count += 1
     logger.warn { "Timer fired #{@timer_count}" }
     self[:timer_count] = @timer_count
+    echo("Timer fired #{@timer_count}")
   end
 
   def webhook_check(method : String, headers : Hash(String, Array(String)), body : String)
