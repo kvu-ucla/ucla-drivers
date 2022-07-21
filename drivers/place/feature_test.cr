@@ -45,7 +45,7 @@ class Place::AcidTest < PlaceOS::Driver
 
   # Push ABI to the limit
   def large_response
-    raw = Slice(Int8).new(104857600, 83_u8)
+    raw = Bytes.new(104857600, 83_u8)
     String.new(raw)
   end
 
