@@ -43,6 +43,12 @@ class Place::AcidTest < PlaceOS::Driver
     self[:trigger_test] = state
   end
 
+  # Push ABI to the limit
+  def large_response
+    raw = Slice(Int8).new(104857600, 83_u8)
+    String.new(raw)
+  end
+
   # Calling remote functions
   def echo(message : String)
     result = helper.echo(message).get
