@@ -49,6 +49,10 @@ class Place::AcidTest < PlaceOS::Driver
     String.new(raw)
   end
 
+  def break_driver_comms
+    PlaceOS::Driver::Protocol.instance.@processor.close
+  end
+
   # Calling remote functions
   def echo(message : String)
     result = helper.echo(message).get
