@@ -15,7 +15,7 @@ shards:
 
   ameba:
     git: https://github.com/crystal-ameba/ameba.git
-    version: 1.0.0
+    version: 1.0.1
 
   backtracer:
     git: https://github.com/sija/backtracer.cr.git
@@ -163,7 +163,7 @@ shards:
 
   placeos-driver:
     git: https://github.com/placeos/driver.git
-    version: 6.4.4
+    version: 6.4.5
 
   placeos-log-backend:
     git: https://github.com/place-labs/log-backend.git
