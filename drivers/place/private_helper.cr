@@ -14,4 +14,8 @@ class Place::PrivateHelper < PlaceOS::Driver
     logger.debug { input }
     input
   end
+
+  def error_raised : Nil
+    raise "an error occured!"
+  end
 end
