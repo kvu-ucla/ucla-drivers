@@ -18,4 +18,8 @@ class Place::PrivateHelper < PlaceOS::Driver
   def error_raised : Nil
     raise "an error occured!"
   end
+
+  def number_response
+    rand(100)
+  end
 end
