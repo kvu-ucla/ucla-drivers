@@ -1,10 +1,9 @@
 require "placeos-driver/spec"
 
 DriverSpecs.mock_driver "Crestron::OccupancySensor" do
-  
-  #Check individual DeviceInfo endpoint
+  # Check individual DeviceInfo endpoint
   should_send "/Device/DeviceInfo"
-  responds %({      
+  responds %({
     "Device": {
       "DeviceInfo": {
         "BuildDate": "May 23 2022  (461338)",
@@ -24,7 +23,7 @@ DriverSpecs.mock_driver "Crestron::OccupancySensor" do
     }
   })
 
-  #check if room is occupied is false
+  # check if room is occupied is false
   should_send "/Device/OccupancySensor/IsRoomOccupied"
   responds %({
       "Device": {
@@ -60,13 +59,13 @@ DriverSpecs.mock_driver "Crestron::OccupancySensor" do
     }
   })
 
-  #check initial pass for occupancy, name, and mac
+  # check initial pass for occupancy, name, and mac
   sleep 0.5
   status[:occupied].should be_false
   status[:name].should eq "Room1-Sensor"
   status[:mac].should eq "00107fec2d72"
 
-  #check sensor details updated correctly
+  # check sensor details updated correctly
   resp = exec(:get_sensor_details).get.not_nil!
   resp.should eq({
     "status"    => "normal",

@@ -99,7 +99,7 @@ class Crestron::OccupancySensor < Crestron::CresNext # < PlaceOS::Driver
   end
 
   # ======================
-  # Sensor interface
+  # Sensor interface.   
   # ======================
 
   SENSOR_TYPES = {SensorType::Presence}
