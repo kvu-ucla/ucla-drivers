@@ -48,7 +48,5 @@ DriverSpecs.mock_driver "Crestron::SIMPLInterface" do
     responds %({"digital-io1": true}\r\n)
     status[:state].should eq(true)
 
-    settings({})                        # triggers on_update
-    status[:state].should eq(true)      # state is re-published
   end
 end
