@@ -42,7 +42,7 @@ class Crestron::SIMPLInterface < PlaceOS::Driver
     line = String.new(bytes).rstrip("\r\n")
     data = JSON.parse(line)
 
-    incoming = extract_bool?(data["digital-io1"])
+    incoming = data["digital-io1"]
     if incoming.nil?
       logger.warn { "unrecognized boolean payload: #{line.inspect}" }
       task.try(&.abort)
@@ -60,7 +60,6 @@ class Crestron::SIMPLInterface < PlaceOS::Driver
     task.try(&.abort)
   end
 
-  # Public accessor for scripting
   def state : Bool?
     @state
   end
@@ -68,22 +67,7 @@ class Crestron::SIMPLInterface < PlaceOS::Driver
   private def publish_state
     val = @state
     return if val.nil?
-    self[:state] = val.not_nil!  # publish false/true correctly
+    self[:state] = val.not_nil! 
   end
 
-  # Accepts true/false, "true"/"false"/"1"/"0"/"on"/"off", or 1/0
-  private def extract_bool?(any : JSON::Any) : Bool?
-    any.as_bool? ||
-      (if s = any.as_s?
-        case s.strip.downcase
-        when "1","true","t","yes","y","on"  then true
-        when "0","false","f","no","n","off" then false
-        else nil
-        end
-      elsif i = any.as_i64?
-        i == 0 ? false : true
-      else
-        nil
-      end)
-  end
 end
