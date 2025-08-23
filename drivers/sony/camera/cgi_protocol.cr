@@ -414,7 +414,7 @@ class Sony::Camera::CGI < PlaceOS::Driver
     self[:power] = power_status == "on" # device returns "on" or "standby"
   end
 
-  def autoframe(state: bool)
+  def autoframe(state : Bool)
     action("/analytics/ptzautoframing.cgi?PtzAutoFraming=#{state ? "on" : "off"}",
     name: "auto-framing") { autoframing? }
   end
