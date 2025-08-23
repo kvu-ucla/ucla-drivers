@@ -420,7 +420,7 @@ class Sony::Camera::CGI < PlaceOS::Driver
   end
 
   def autoframing?
-    autoframe_status: String = nil
+    autoframe_status: String? = nil
     query("/command/inquiry.cgi?inq=sysinfo", priority: 0) do |response|
       autoframe_status = response["PtzAutoFraming"]?
     end  
