@@ -299,18 +299,17 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
     raw_json = String.new data
     json = JSON.parse(raw_json)
 
-    begin 
+    begin
       inputs = json.dig?("Device", "AvioV2", "Inputs").as_h?
       inputs.each do |input_name, input_val|
-      ports = input_val.dig?("InputInfo", "Ports").as_h?
-      ports.each do |port_name, port_val|
-        vertical_res = port_val.dig?("VerticalResolution").try &.as_i?
-        self["#{input_name}_sync"] = vertical_res && vertical_res >= 1080
+        ports = input_val.dig?("InputInfo", "Ports").as_h?
+        ports.each do |port_name, port_val|
+          vertical_res = port_val.dig?("VerticalResolution").try &.as_i?
+          self["#{input_name}_sync"] = vertical_res && vertical_res >= 1080
+        end
+      end
     rescue e
       logger.debug { "unsolicited parse error: #{e.message}" }
     end
   end
-
- 
-
 end
