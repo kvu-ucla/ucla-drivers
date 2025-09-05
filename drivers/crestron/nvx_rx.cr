@@ -310,7 +310,7 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
 
           ports.each do |_, port_val|
             vr = port_val.dig?("VerticalResolution").try &.as_i?
-            key = "#{input_name.downcase}_sync".to_sym
+            key = "#{input_name.downcase}_sync"
             self[key] = vr && vr >= MIN_SYNC_VERTICAL
           end
         end

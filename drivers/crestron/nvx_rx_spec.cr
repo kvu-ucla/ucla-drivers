@@ -59,7 +59,7 @@ DriverSpecs.mock_driver "Crestron::NvxRx" do
   status[:audio_source].should eq("Input1")
   status[:device_name].should eq("projector")
   status[:osd_text].should eq("Hearing Loop")
-  status[:input3_sync].should eq(false)
+  status[input3_sync].should eq(false)
 
   # we call this manually as the driver isn't loaded in websocket mode
   exec :authenticate
