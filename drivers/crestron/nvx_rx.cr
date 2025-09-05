@@ -24,6 +24,8 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
   @subscriptions : Hash(String, JSON::Any) = {} of String => JSON::Any
   @audio_follows_video : Bool = true
 
+  MIN_SYNC_VERTICAL = 1080
+
   def connected
     super
     audio_follows_video = setting?(Bool, :audio_follows_video)
@@ -308,7 +310,7 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
 
           ports.each do |_, port_val|
             vr = port_val.dig?("VerticalResolution").try &.as_i?
-            self["#{input_name}_sync"] = vr && vr >= 1080
+            self["#{input_name}_sync"] = vr && vr >= MIN_SYNC_VERTICAL
           end
         end
       end
@@ -316,4 +318,5 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
       logger.debug { "unsolicited parse error: #{e.message}" }
     end
   end
+
 end

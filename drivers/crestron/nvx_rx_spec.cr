@@ -53,7 +53,7 @@ DriverSpecs.mock_driver "Crestron::NvxRx" do
   should_send "/Device/DeviceSpecific/ActiveAudioSource"
   responds %({"Device": {"DeviceSpecific": {"ActiveAudioSource": "Input1"}}})
 
-  should_send "Device/AvioV2/Inputs/Input3/InputInfo/Ports/Port1"
+  should_send "Device/AvioV2/Inputs/Input3/InputInfo/Ports/Port1/VerticalResolution"
   responds %({"Device":{"AvioV2":{"Inputs":{"Input3":{"InputInfo":{"Ports":{"Port1":{"VerticalResolution": 0}}}}}}}})
 
   status[:video_source].should eq("Stream-00000000-0000-4002-0054-018a0089fd1c")
