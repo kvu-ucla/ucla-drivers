@@ -134,7 +134,7 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
   end
 
   protected def query_input_state
-    query("/AvioV2/Inputs", name: "input_states") do |inputs, _task|
+    query("/AvioV2/Inputs", name: "input_states", priority: 5) do |inputs, _task|
       if in_h = inputs.as_h?
         in_h.each do |input_name, input_val|
           if ports = input_val.dig?("InputInfo", "Ports").try &.as_h?
