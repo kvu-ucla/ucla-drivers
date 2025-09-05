@@ -133,6 +133,22 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
     end
   end
 
+  protected def query_input_state
+    query("/AvioV2/Inputs", name: "input_states") do |inputs, _task|
+      if in_h = inputs.as_h?
+        in_h.each do |input_name, input_val|
+          if ports = input_val.dig?("InputInfo", "Ports").try &.as_h?
+            ports.each do |_, port_val|
+              vr  = port_val.dig?("VerticalResolution").try &.as_i?
+              key = "#{input_name.downcase}_sync"
+              self[key] = vr && vr >= MIN_SYNC_VERTICAL
+            end
+          end
+        end
+      end
+    end
+  end
+
   def query_osd_text
     query("/Osd/Text", name: "osd_text") do |text|
       self[:osd_text] = text
@@ -293,6 +309,7 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
     query_source_name_for(:audio)
     query_device_name
     query_osd_text
+    query_input_state
   end
 
   def received(data, task)
