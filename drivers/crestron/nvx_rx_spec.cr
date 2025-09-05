@@ -54,12 +54,14 @@ DriverSpecs.mock_driver "Crestron::NvxRx" do
   responds %({"Device": {"DeviceSpecific": {"ActiveAudioSource": "Input1"}}})
 
   responds %({"Device":{"AvioV2":{"Inputs":{"Input3":{"InputInfo":{"Ports":{"Port1":{"VerticalResolution": 0}}}}}}}})
+  responds %({"Device":{"AvioV2":{"Inputs":{"Input4":{"InputInfo":{"Ports":{"Port1":{"VerticalResolution": 1080}}}}}}}})
 
   status[:video_source].should eq("Stream-00000000-0000-4002-0054-018a0089fd1c")
   status[:audio_source].should eq("Input1")
   status[:device_name].should eq("projector")
   status[:osd_text].should eq("Hearing Loop")
   status[:input3_sync].should eq(false)
+  status[:input4_sync].should eq(true)
 
   # we call this manually as the driver isn't loaded in websocket mode
   exec :authenticate
