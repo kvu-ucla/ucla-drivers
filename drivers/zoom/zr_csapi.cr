@@ -663,7 +663,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "zCommand"
       case response_topkey
       when "ListParticipantsResult"
-        if response["event"]?.as_s? == "None"
+        if response["event"]?.to_s == "None"
           expose_custom_participant_list
         end
       end
