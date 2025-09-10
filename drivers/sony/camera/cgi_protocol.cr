@@ -32,6 +32,20 @@ class Sony::Camera::CGI < PlaceOS::Driver
     Unknown
   end
 
+  enum MovementDirection
+  Up
+  Down
+  Left
+  Right
+  Up
+  UpLeft
+  UpRight
+  DownLeft
+  DownRight
+  Tele
+  Wide
+  end
+
   def on_load
     # Configure the constants
     @pantilt_speed = -100..100
@@ -277,6 +291,44 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
+  # Convert enum name to the format the API expects, i.e. compound directions need a - 
+  def to_api : String
+    to_s.gsub(/([a-z])([A-Z])/, "\\1-\\2").downcase
+  end
+
+  # Vertical inversion
+  private def invert_vertical(dir : MovementDirection) : MovementDirection
+    case dir
+    when .Up        then MovementDirection::Down
+    when .Down      then MovementDirection::Up
+    when .UpLeft    then MovementDirection::DownLeft
+    when .UpRight   then MovementDirection::DownRight
+    when .DownLeft  then MovementDirection::UpLeft
+    when .DownRight then MovementDirection::UpRight
+    else dir  # Tele, Wide, Left, Right unchanged
+    end
+  end
+
+  def move_all(position : MovementDirection, index : Int32 | String = 0)
+    # indexes start at 1 on sony cameras
+    index = index.to_i + 1
+
+    # apply “invert controls” if enabled
+    dir = @invert_controls ? invert_vertical(position) : position
+
+    case dir
+    when .Up, .Down, .Left, .Right,
+        .UpLeft, .UpRight, .DownLeft, .DownRight,
+        .Tele, .Wide
+      action("/command/ptzf.cgi?Move=#{dir.to_api},0,image#{index}",
+        name: "moving",
+        priority: queue.priority + 50,
+      ) { self[:moving] = @moving = true }
+    else
+      raise "unsupported direction: #{dir}"
+    end
+  end
+
   macro in_range(range, value)
     {{value}} = if {{range}}.includes? {{value}}
                   {{value}}
@@ -382,6 +434,20 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
+  #save preset directly to camera
+  def cam_preset_save (preset_no : Int32)
+      action("/command/presetposition.cgi?PresetSet=#{preset_no},0,off",
+        name: "position"
+    ) { cam_save }
+  end
+
+  #recall preset directly from camera
+  def cam_preset_recall (preset_no : Int32)
+      action("/command/presetposition.cgi?PresetCall=#{preset_no}",
+        name: "position"
+    ) { cam_recall }
+  end
+
   def save_position(name : String, index : Int32 | String = 0)
     @presets[name] = {
       pan: @pan, tilt: @tilt, zoom: @zoom_raw, focus: @focus_raw
@@ -396,6 +462,21 @@ class Sony::Camera::CGI < PlaceOS::Driver
     self[:presets] = @presets.keys
   end
 
+    #autoframing toggle and status query
+  def autoframe(state : Bool)
+    action("/analytics/ptzautoframing.cgi?PtzAutoFraming=#{state ? "on" : "off"}",
+    name: "auto-framing"
+    ) { autoframing? }
+  end
+
+  def autoframing?
+    autoframe_status: String? = nil
+    query("/command/inquiry.cgi?inq=ptzautoframing", priority: 0) do |response|
+      autoframe_status = response["PtzAutoFraming"]?
+    end  
+    return nil unless autoframe_status
+    self[:autoframe] = autoframe_status == "on" # device returns "on" or "off"
+  end
 
   # ====== Powerable Interface ======
 
@@ -412,19 +493,5 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
     return nil unless power_status
     self[:power] = power_status == "on" # device returns "on" or "standby"
-  end
-
-  def autoframe(state : Bool)
-    action("/analytics/ptzautoframing.cgi?PtzAutoFraming=#{state ? "on" : "off"}",
-    name: "auto-framing") { autoframing? }
-  end
-
-  def autoframing?
-    autoframe_status: String? = nil
-    query("/command/inquiry.cgi?inq=sysinfo", priority: 0) do |response|
-      autoframe_status = response["PtzAutoFraming"]?
-    end  
-    return nil unless autoframe_status
-    self[:autoframe] = autoframe_status == "on" # device returns "on" or "off"
   end
 end
