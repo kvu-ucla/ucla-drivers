@@ -351,15 +351,8 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     mic_state = call.dig?("Microphone", "Mute")
     cam_state = call.dig?("Camera", "Mute")
     self[:in_call] = call_state.as_s? == "IN_MEETING" if call_state
-    
-    if mic_state.is_a?(Bool)
-      self[:mic_mute] = mic_state
-    end
-
-    if cam_state.is_a?(Bool)
-      self[:cam_mute] = cam_state
-    end
-
+    self[:mic_mute] = mic_state.as_bool? if mic_state
+    self[:cam_mute] = cam_state.as_bool? if cam_state
   end
 
   # Get audio input devices
@@ -663,7 +656,17 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "zCommand"
       case response_topkey
       when "ListParticipantsResult"
-        if response["event"]?.to_s == "None"
+        list = response["ListParticipantsResult"]?
+
+        event = nil
+        case list
+        when Hash
+          event = list["event"]?.to_s
+        when Array
+          event = list.first?["event"]?.to_s
+        end
+
+        if event == "None"
           expose_custom_participant_list
         end
       end
