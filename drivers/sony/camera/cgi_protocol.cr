@@ -43,6 +43,11 @@ class Sony::Camera::CGI < PlaceOS::Driver
   DownRight
   Tele
   Wide
+
+    # Convert enum name to the format the API expects, i.e. compound directions need a - 
+    def to_api : String
+      to_s.gsub(/([a-z])([A-Z])/, "\\1-\\2").downcase
+    end
   end
 
   def on_load
