@@ -347,12 +347,18 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   private def expose_custom_call_state
     return unless call = self[:Call]
     logger.debug { "Call state changed to #{call.inspect}" } if @debug_enabled
+    
     call_state = call.dig?("Status")
-    mic_state = call.dig?("Microphone", "Mute")
-    cam_state = call.dig?("Camera", "Mute")
     self[:in_call] = call_state.as_s? == "IN_MEETING" if call_state
-    self[:mic_mute] = mic_state.as_bool? if mic_state
-    self[:cam_mute] = cam_state.as_bool? if cam_state
+    
+    mic_state = call["Microphone"]?.as_h?["Mute"]?.as_bool?
+    self[:mic_mute] = mic_state if mic_state != nil
+
+    cam_state = call["Camera"]?.as_h?["Mute"]?.as_bool?
+    self[:cam_mute] = cam_state if cam_state != nil
+
+    logger.debug { "mic_mute is #{mic_state.inspect}" } if @debug_enabled
+    logger.debug { "cam_mute is #{cam_state.inspect}" } if @debug_enabled
   end
 
   # Get audio input devices
@@ -658,14 +664,19 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       when "ListParticipantsResult"
         list = response["ListParticipantsResult"]?
 
+        logger.debug { "ListParticipantsResult is #{list.inspect}" }
+
         event = nil
         case list
         when Hash
           event = list["event"]?.to_s
         when Array
           event = list.first?["event"]?.to_s
+        else
+          logger.debug { "Unexpected type for ListParticipantsResult: #{list.class}" } if list  
         end
 
+        logger.debug { "event type for ListParticipantResults is #{event}" }
         if event == "None"
           expose_custom_participant_list
         end
