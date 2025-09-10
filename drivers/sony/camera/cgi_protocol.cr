@@ -37,7 +37,6 @@ class Sony::Camera::CGI < PlaceOS::Driver
   Down
   Left
   Right
-  Up
   UpLeft
   UpRight
   DownLeft
