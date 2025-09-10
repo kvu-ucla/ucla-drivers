@@ -348,7 +348,11 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     return unless call = self[:Call]
     logger.debug { "Call state changed to #{call.inspect}" } if @debug_enabled
     call_state = call.dig?("Status")
+    mic_state = call.dig?("Microphone", "Mute")
+    cam_state = call.dig?("Camera", "Mute")
     self[:in_call] = call_state.as_s? == "IN_MEETING" if call_state
+    self[:mic_mute] = mic_state.as_b? == true if mic_state
+    self[:cam_mute] = cam_state.as_b? == true if cam_state
   end
 
   # Get audio input devices
@@ -652,7 +656,9 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "zCommand"
       case response_topkey
       when "ListParticipantsResult"
-        expose_custom_participant_list
+        if response["event"]?.as_s? == "None"
+          expose_custom_participant_list
+        end
       end
     end
   end
