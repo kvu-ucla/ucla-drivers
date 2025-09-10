@@ -316,9 +316,9 @@ class Sony::Camera::CGI < PlaceOS::Driver
     dir = @invert_controls ? invert_vertical(position) : position
 
     case dir
-    when .Up, .Down, .Left, .Right,
-        .UpLeft, .UpRight, .DownLeft, .DownRight,
-        .Tele, .Wide
+    when MovementDirection::Up, MovementDirection::Down, MovementDirection::Left, MovementDirection::Right,
+        MovementDirection::UpLeft, MovementDirection::UpRight, MovementDirection::DownLeft, MovementDirection::DownRight,
+        MovementDirection::Tele, MovementDirection::Wide
       action("/command/ptzf.cgi?Move=#{dir.to_api},0,image#{index}",
         name: "moving",
         priority: queue.priority + 50,
