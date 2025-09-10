@@ -298,12 +298,12 @@ class Sony::Camera::CGI < PlaceOS::Driver
   # Vertical inversion
   private def invert_vertical(dir : MovementDirection) : MovementDirection
     case dir
-    when .Up        then MovementDirection::Down
-    when .Down      then MovementDirection::Up
-    when .UpLeft    then MovementDirection::DownLeft
-    when .UpRight   then MovementDirection::DownRight
-    when .DownLeft  then MovementDirection::UpLeft
-    when .DownRight then MovementDirection::UpRight
+    when MovementDirection::Up        then MovementDirection::Down
+    when MovementDirection::Down      then MovementDirection::Up
+    when MovementDirection::UpLeft    then MovementDirection::DownLeft
+    when MovementDirection::UpRight   then MovementDirection::DownRight
+    when MovementDirection::DownLeft  then MovementDirection::UpLeft
+    when MovementDirection::DownRight then MovementDirection::UpRight
     else dir  # Tele, Wide, Left, Right unchanged
     end
   end
