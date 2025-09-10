@@ -351,8 +351,15 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     mic_state = call.dig?("Microphone", "Mute")
     cam_state = call.dig?("Camera", "Mute")
     self[:in_call] = call_state.as_s? == "IN_MEETING" if call_state
-    self[:mic_mute] = mic_state.as_b? == true if mic_state
-    self[:cam_mute] = cam_state.as_b? == true if cam_state
+    
+    if mic_state.is_a?(Bool)
+      self[:mic_mute] = mic_state
+    end
+
+    if cam_state.is_a?(Bool)
+      self[:cam_mute] = cam_state
+    end
+
   end
 
   # Get audio input devices
