@@ -437,14 +437,14 @@ class Sony::Camera::CGI < PlaceOS::Driver
   def cam_preset_save (preset_no : Int32)
       action("/command/presetposition.cgi?PresetSet=#{preset_no},0,off",
         name: "position"
-    )
+    ) { }
   end
 
   #recall preset directly from camera
   def cam_preset_recall (preset_no : Int32)
       action("/command/presetposition.cgi?PresetCall=#{preset_no}",
         name: "position"
-    )
+    ) { }
   end
 
   def save_position(name : String, index : Int32 | String = 0)
