@@ -295,11 +295,6 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
-  # Convert enum name to the format the API expects, i.e. compound directions need a - 
-  def to_api : String
-    to_s.gsub(/([a-z])([A-Z])/, "\\1-\\2").downcase
-  end
-
   # Vertical inversion
   private def invert_vertical(dir : MovementDirection) : MovementDirection
     case dir
@@ -442,14 +437,14 @@ class Sony::Camera::CGI < PlaceOS::Driver
   def cam_preset_save (preset_no : Int32)
       action("/command/presetposition.cgi?PresetSet=#{preset_no},0,off",
         name: "position"
-    ) { cam_save }
+    )
   end
 
   #recall preset directly from camera
   def cam_preset_recall (preset_no : Int32)
       action("/command/presetposition.cgi?PresetCall=#{preset_no}",
         name: "position"
-    ) { cam_recall }
+    )
   end
 
   def save_position(name : String, index : Int32 | String = 0)
