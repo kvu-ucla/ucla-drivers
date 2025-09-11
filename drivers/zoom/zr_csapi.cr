@@ -346,19 +346,16 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
 
   private def expose_custom_call_state
     return unless call = self[:Call]
-    logger.debug { "Call state changed to #{call.inspect}" } if @debug_enabled
     
     call_state = call.dig?("Status")
     self[:in_call] = call_state.as_s? == "IN_MEETING" if call_state
     
-    mic_state = call["Microphone"]?.as_h?["Mute"]?.as_bool?
-    self[:mic_mute] = mic_state if mic_state != nil
+    mic_state = call.dig?("Microphone", "Mute")
+    self[:mic_mute] = mic_state.as_bool? if mic_state
 
-    cam_state = call["Camera"]?.as_h?["Mute"]?.as_bool?
-    self[:cam_mute] = cam_state if cam_state != nil
+    cam_state = call.dig?("Camera", "Mute")
+    self[:cam_mute] = cam_state.as_bool? if cam_state
 
-    logger.debug { "mic_mute is #{mic_state.inspect}" } if @debug_enabled
-    logger.debug { "cam_mute is #{cam_state.inspect}" } if @debug_enabled
   end
 
   # Get audio input devices
@@ -646,6 +643,24 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       self[response_topkey] = json_response[response_topkey]
     end
 
+    case response_topkey
+    when "Call"
+      expose_custom_call_state
+    when "ListParticipantsResult"
+      list = json_response["ListParticipantsResult"]?
+      event = nil
+      case list
+      when Hash
+        event = list["event"]?.to_s
+      when Array
+        event = list.first?["event"]?.to_s
+      end
+      
+      if event == "None"  # Only when explicitly queried
+        expose_custom_participant_list
+      end
+    end    
+
     # Perform additional actions
     case response_type
     when "zEvent"
@@ -662,24 +677,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "zCommand"
       case response_topkey
       when "ListParticipantsResult"
-        list = response["ListParticipantsResult"]?
-
-        logger.debug { "ListParticipantsResult is #{list.inspect}" }
-
-        event = nil
-        case list
-        when Hash
-          event = list["event"]?.to_s
-        when Array
-          event = list.first?["event"]?.to_s
-        else
-          logger.debug { "Unexpected type for ListParticipantsResult: #{list.class}" } if list  
-        end
-
-        logger.debug { "event type for ListParticipantResults is #{event}" }
-        if event == "None"
-          expose_custom_participant_list
-        end
+        expose_custom_participant_list
       end
     end
   end
