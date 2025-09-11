@@ -321,6 +321,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
 
   # Get participant list
   def call_list_participants
+    logger.debug { "=== CALLING call_list_participants ===" }
     do_send("zCommand Call ListParticipants", name: "call_participants")
     sleep @response_delay.milliseconds
     self["ListParticipantsResult"]
@@ -659,10 +660,11 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       case event
       when "ZRCUserChangedEventJoinedMeeting", 
           "ZRCUserChangedEventLeftMeeting", 
-          "ZRCUserChangedEventUserInfoUpdated"
+          "ZRCUserChangedEventUserInfoUpdated"  
+        logger.debug { "*** TRIGGERING FRESH QUERY FOR: #{event} ***" }
         # Query for fresh participant data
         call_list_participants
-      when "None"
+      else
         # Process the participant list that came with this response
         expose_custom_participant_list
       end   
