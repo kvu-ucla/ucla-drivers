@@ -650,44 +650,33 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "ListParticipantsResult"
       begin
         list = json_response["ListParticipantsResult"]
-        
-        # Extract event using Crystal-safe syntax
         event = nil
         
-        # Method 1: Direct access with proper nil handling
-        if list.responds_to?(:[])
-          event_value = list["event"]?
-          event = event_value.try(&.as_s) if event_value
-        end
-        
-        # Method 2: Hash conversion fallback
-        if event.nil?
-          hash_version = list.as_h?
-          if hash_version
-            event_value = hash_version["event"]?
+        # Handle different data structures correctly
+        if list.as_a?
+          # It's an array (manual query response) - get event from first participant
+          first_participant = list.as_a.first?
+          if first_participant && first_participant.as_h?
+            event_value = first_participant.as_h["event"]?
             event = event_value.try(&.as_s) if event_value
           end
-        end
-        
-        # Method 3: String search as last resort
-        if event.nil?
-          raw_str = list.to_json
-          if match = raw_str.match(/"event"\s*:\s*"([^"]+)"/)
-            event = match[1]
-          end
+        elsif list.as_h?
+          # It's a single hash (automatic event) - get event directly
+          event_value = list.as_h["event"]?
+          event = event_value.try(&.as_s) if event_value
         end
         
         logger.info { "Final event: #{event}" }
         
-        # Handle the event
-        if event && event.starts_with?("ZRCUserChangedEvent")
+        # Handle the event properly
+        if event == "None" && list.as_a?
+          # Manual query response - process the participant list
+          logger.info { "Processing manual query response" }
+          expose_custom_participant_list
+        elsif event && event.starts_with?("ZRCUserChangedEvent")
+          # Automatic event - trigger fresh query
           logger.info { "Triggering auto-refresh for: #{event}" }
           call_list_participants
-        elsif list.as_a?
-          logger.info { "Processing participant array" }
-          expose_custom_participant_list
-        else
-          logger.info { "Ignoring single participant update" }
         end
         
       rescue ex
