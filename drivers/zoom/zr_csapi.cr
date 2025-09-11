@@ -656,10 +656,16 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         event = list.first?["event"]?.to_s
       end
       
-      if event == "None"  # Only when explicitly queried
+      case event
+      when "ZRCUserChangedEventJoinedMeeting", 
+          "ZRCUserChangedEventLeftMeeting", 
+          "ZRCUserChangedEventUserInfoUpdated"
+        # Query for fresh participant data
+        call_list_participants
+      when "None"
+        # Process the participant list that came with this response
         expose_custom_participant_list
-      end
-    end    
+    end   
 
     # Perform additional actions
     case response_type
@@ -676,9 +682,6 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "zConfiguration"
     when "zCommand"
       case response_topkey
-      when "ListParticipantsResult"
-        expose_custom_participant_list
-      end
     end
   end
 
