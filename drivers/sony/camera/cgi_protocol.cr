@@ -328,6 +328,14 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
+  #stop zooming in/out
+  def stop_zoom
+          action("/command/ptzf.cgi?Move=stop,zoom",
+        name: "position"
+    ) { }
+  end  
+
+
   macro in_range(range, value)
     {{value}} = if {{range}}.includes? {{value}}
                   {{value}}
@@ -336,6 +344,8 @@ class Sony::Camera::CGI < PlaceOS::Driver
                 end
     {{value}} = twos_complement({{value}})
   end
+
+  
 
   def pantilt(pan : Int32, tilt : Int32, zoom : Int32? = nil, focus : Int32? = nil) : Nil
     in_range @pan_range, pan
