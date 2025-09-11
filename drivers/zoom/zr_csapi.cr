@@ -665,7 +665,8 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       when "None"
         # Process the participant list that came with this response
         expose_custom_participant_list
-    end   
+      end   
+    end
 
     # Perform additional actions
     case response_type
@@ -679,6 +680,9 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       when "Call"
         expose_custom_call_state
       end
+    when "zConfiguration"
+    when "zCommand"
+    end
   end
 
   private def do_send(command, **options)
