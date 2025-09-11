@@ -649,29 +649,27 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       expose_custom_call_state
     when "ListParticipantsResult"
       list = json_response["ListParticipantsResult"]?
-      logger.info { "Raw list: #{list.inspect}" }
       
-      event = nil
-      case list
-      when Hash
-        event = list["event"]?.to_s
-        logger.info { "Extracted event from Hash: #{event.inspect}" }
-      when Array
-        event = list.first?["event"]?.to_s
-        logger.info { "Extracted event from Array: #{event.inspect}" }
-      end
+      # Extract event directly from JSON
+      event = case list
+              when Hash
+                list.as_h["event"]?.as_s?
+              when Array
+                list.as_a.first?.as_h["event"]?.as_s?
+              end
       
-      logger.info { "Final event: #{event.inspect}" }
+      logger.info { "Extracted event: #{event.inspect}" }
       
       case event
       when "ZRCUserChangedEventJoinedMeeting", 
           "ZRCUserChangedEventLeftMeeting", 
           "ZRCUserChangedEventUserInfoUpdated"
-        logger.info { "*** MATCHED EVENT: #{event} ***" }
+        logger.info { "*** CALLING FRESH QUERY ***" }
         call_list_participants
       else
-        logger.info { "*** NO MATCH FOR EVENT: #{event} ***" }
-        expose_custom_participant_list
+        if list.is_a?(Array)
+          expose_custom_participant_list
+        end
       end   
     end
 
