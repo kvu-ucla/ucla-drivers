@@ -133,25 +133,39 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
     end
   end
 
-  protected def query_input_state
-    query("/AvioV2/Inputs", name: "input_states", priority: 5) do |inputs, _task|
-      if in_h = inputs.as_h?
-        in_h.each do |input_name, input_val|
-          if ports = input_val.dig?("InputInfo", "Ports").try &.as_h?
-            ports.each do |_, port_val|
-              vr  = port_val.dig?("VerticalResolution").try &.as_i?
-              key = "#{input_name.downcase}_sync"
-              self[key] = vr && vr >= MIN_SYNC_VERTICAL
-            end
-          end
-        end
-      end
-    end
-  end
-
   def query_osd_text
     query("/Osd/Text", name: "osd_text") do |text|
       self[:osd_text] = text
+    end
+  end
+
+  # Shared method to process input sync status
+  private def process_input_sync_status(inputs_hash)
+    return unless inputs_hash
+
+    inputs_hash.each do |input_name, input_val|
+      key = "#{input_name.downcase}_sync"
+      
+      # Default to false
+      sync_detected = false
+      
+      if ports = input_val.dig?("InputInfo", "Ports").try &.as_h?
+        ports.each do |_, port_val|
+          vr = port_val.dig?("VerticalResolution").try &.as_i?
+          if vr && vr >= MIN_SYNC_VERTICAL
+            sync_detected = true
+            break
+          end
+        end
+      end
+      
+      self[key] = sync_detected
+    end
+  end
+
+  protected def query_input_state
+    query("/AvioV2/Inputs", name: "input_states", priority: 5) do |inputs, _task|
+      process_input_sync_status(inputs.as_h?) if inputs
     end
   end
 
@@ -312,29 +326,19 @@ class Crestron::NvxRx < Crestron::CresNext # < PlaceOS::Driver
     query_input_state
   end
 
-  def received(data, task)
-    super
-    
-    raw_json = String.new data
-    json = JSON.parse(raw_json)
+def received(data, task)
+  super
+  
+  raw_json = String.new data
+  json = JSON.parse(raw_json)
 
-    begin
-
-      if inputs = json.dig?("Device", "AvioV2", "Inputs").try &.as_h?
-        inputs.each do |input_name, input_val|
-          ports = input_val.dig?("InputInfo", "Ports").try &.as_h?
-          next unless ports
-
-          ports.each do |_, port_val|
-            vr = port_val.dig?("VerticalResolution").try &.as_i?
-            key = "#{input_name.downcase}_sync"
-            self[key] = vr && vr >= MIN_SYNC_VERTICAL
-          end
-        end
-      end
-    rescue e
-      logger.debug { "unsolicited parse error: #{e.message}" }
+  begin
+    if inputs = json.dig?("Device", "AvioV2", "Inputs").try &.as_h?
+      process_input_sync_status(inputs)
     end
+  rescue e
+    logger.debug { "unsolicited parse error: #{e.message}" }
   end
+end
 
 end
