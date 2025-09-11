@@ -679,10 +679,6 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       when "Call"
         expose_custom_call_state
       end
-    when "zConfiguration"
-    when "zCommand"
-      case response_topkey
-    end
   end
 
   private def do_send(command, **options)
