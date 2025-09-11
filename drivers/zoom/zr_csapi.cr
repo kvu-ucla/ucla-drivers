@@ -651,18 +651,25 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       begin
         list = json_response["ListParticipantsResult"]
         
-        # Extract event using multiple fallback methods
+        # Extract event using Crystal-safe syntax
         event = nil
         
-        # Method 1: Direct access
-        event = list["event"]?.as_s? if list.responds_to?(:[])
-        
-        # Method 2: If it's wrapped in another layer
-        if event.nil? && list.as_h?
-          event = list.as_h["event"]?.as_s?
+        # Method 1: Direct access with proper nil handling
+        if list.responds_to?(:[])
+          event_value = list["event"]?
+          event = event_value.try(&.as_s) if event_value
         end
         
-        # Method 3: String-based search as last resort
+        # Method 2: Hash conversion fallback
+        if event.nil?
+          hash_version = list.as_h?
+          if hash_version
+            event_value = hash_version["event"]?
+            event = event_value.try(&.as_s) if event_value
+          end
+        end
+        
+        # Method 3: String search as last resort
         if event.nil?
           raw_str = list.to_json
           if match = raw_str.match(/"event"\s*:\s*"([^"]+)"/)
