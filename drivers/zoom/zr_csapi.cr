@@ -648,29 +648,44 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     when "Call"
       expose_custom_call_state
     when "ListParticipantsResult"
-      list = json_response["ListParticipantsResult"]?
-      
-      # Extract event directly from JSON
-      event = case list
-              when Hash
-                list.as_h["event"]?.as_s?
-              when Array
-                list.as_a.first?.as_h["event"]?.as_s?
-              end
-      
-      logger.info { "Extracted event: #{event.inspect}" }
-      
-      case event
-      when "ZRCUserChangedEventJoinedMeeting", 
-          "ZRCUserChangedEventLeftMeeting", 
-          "ZRCUserChangedEventUserInfoUpdated"
-        logger.info { "*** CALLING FRESH QUERY ***" }
-        call_list_participants
-      else
-        if list.is_a?(Array)
-          expose_custom_participant_list
+      begin
+        list = json_response["ListParticipantsResult"]
+        
+        # Extract event using multiple fallback methods
+        event = nil
+        
+        # Method 1: Direct access
+        event = list["event"]?.as_s? if list.responds_to?(:[])
+        
+        # Method 2: If it's wrapped in another layer
+        if event.nil? && list.as_h?
+          event = list.as_h["event"]?.as_s?
         end
-      end   
+        
+        # Method 3: String-based search as last resort
+        if event.nil?
+          raw_str = list.to_json
+          if match = raw_str.match(/"event"\s*:\s*"([^"]+)"/)
+            event = match[1]
+          end
+        end
+        
+        logger.info { "Final event: #{event}" }
+        
+        # Handle the event
+        if event && event.starts_with?("ZRCUserChangedEvent")
+          logger.info { "Triggering auto-refresh for: #{event}" }
+          call_list_participants
+        elsif list.as_a?
+          logger.info { "Processing participant array" }
+          expose_custom_participant_list
+        else
+          logger.info { "Ignoring single participant update" }
+        end
+        
+      rescue ex
+        logger.error { "Error processing ListParticipantsResult: #{ex.message}" }
+      end
     end
 
     # Perform additional actions
