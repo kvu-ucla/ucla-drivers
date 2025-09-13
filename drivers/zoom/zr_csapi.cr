@@ -342,17 +342,30 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     
     self[:number_of_participants] = participants_array.size
     self[:Participants] = participants_array.map do |p|
-      participant = p.as_h
+    
+      selected = p.as_h.select(
+        "user_id",
+        "user_name",
+        "audio_status state",
+        "video_status has_source", 
+        "video_status is_sending",
+        "isCohost",
+        "is_host",
+        "is_in_waiting_room",
+        "hand_status"
+      )
+      
+      # Now transform the keys
       {
-        "user_id" => participant["user_id"],
-        "user_name" => participant["user_name"],
-        "audio_state" => participant["audio_status state"]?,
-        "video_has_source" => participant["video_status has_source"]?,
-        "video_is_sending" => participant["video_status is_sending"]?, 
-        "isCohost" => participant["isCohost"],
-        "is_host" => participant["is_host"],
-        "is_in_waiting_room" => participant["is_in_waiting_room"],
-        "hand_status" => participant["hand_status"]
+        "user_id" => selected["user_id"]?,
+        "user_name" => selected["user_name"]?,
+        "audio_state" => selected["audio_status state"]?,
+        "video_has_source" => selected["video_status has_source"]?,
+        "video_is_sending" => selected["video_status is_sending"]?,
+        "isCohost" => selected["isCohost"]?,
+        "is_host" => selected["is_host"]?,
+        "is_in_waiting_room" => selected["is_in_waiting_room"]?,
+        "hand_status" => selected["hand_status"]?
       }
     end
   end
