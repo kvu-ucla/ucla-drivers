@@ -332,7 +332,6 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     participants = self["ListParticipantsResult"]?
     return unless participants
     
-    # Handle both single object and array cases
     participants_array = case participants
                         when Array
                           participants.as_a
@@ -341,31 +340,30 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
                         end
     
     self[:number_of_participants] = participants_array.size
-    self[:Participants] = participants_array.map do |p|
     
-      selected = p.as_h.select(
-        "user_id",
-        "user_name",
-        "audio_status state",
-        "video_status has_source", 
-        "video_status is_sending",
-        "isCohost",
-        "is_host",
-        "is_in_waiting_room",
-        "hand_status"
-      )
-      
-      # Now transform the keys
+    selected_participants = participants_array.map { |p| p.as_h.select(
+      "user_id",
+      "user_name",
+      "audio_status state",
+      "video_status has_source",
+      "video_status is_sending",
+      "isCohost",
+      "is_host",
+      "is_in_waiting_room",
+      "hand_status"
+    )}
+    
+    self[:Participants] = selected_participants.map do |participant|
       {
-        "user_id" => selected["user_id"]?,
-        "user_name" => selected["user_name"]?,
-        "audio_state" => selected["audio_status state"]?,
-        "video_has_source" => selected["video_status has_source"]?,
-        "video_is_sending" => selected["video_status is_sending"]?,
-        "isCohost" => selected["isCohost"]?,
-        "is_host" => selected["is_host"]?,
-        "is_in_waiting_room" => selected["is_in_waiting_room"]?,
-        "hand_status" => selected["hand_status"]?
+        "user_id" => participant["user_id"],
+        "user_name" => participant["user_name"],
+        "audio_state" => participant["audio_status state"],
+        "video_has_source" => participant["video_status has_source"],
+        "video_is_sending" => participant["video_status is_sending"],
+        "isCohost" => participant["isCohost"],
+        "is_host" => participant["is_host"],
+        "is_in_waiting_room" => participant["is_in_waiting_room"],
+        "hand_status" => participant["hand_status"]
       }
     end
   end
