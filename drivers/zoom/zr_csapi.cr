@@ -330,6 +330,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   #Expose ListParticipantsResult in a more easily read and usable format
   private def expose_custom_participant_list
     participants = self["ListParticipantsResult"]?
+    logger.debug { "1. Raw participants data: #{participants.inspect}" } if @debug_enabled
     return unless participants
     
     participants_array = case participants
@@ -339,21 +340,46 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
                           [participants]
                         end
     
+    logger.debug { "2. participants_array size: #{participants_array.size}" } if @debug_enabled
+    logger.debug { "3. participants_array content: #{participants_array.inspect}" } if @debug_enabled
     self[:number_of_participants] = participants_array.size
     
-    selected_participants = participants_array.map { |p| p.as_h.select(
-      "user_id",
-      "user_name",
-      "audio_status state",
-      "video_status has_source",
-      "video_status is_sending",
-      "isCohost",
-      "is_host",
-      "is_in_waiting_room",
-      "hand_status"
-    )}
+    # First, do exactly what worked before - but handle JSON::Any properly
+    logger.debug { "4. Starting .select() step..." } if @debug_enabled
+    selected_participants = participants_array.map do |p| 
+      logger.debug { "5. Processing participant p: #{p.inspect}" } if @debug_enabled
+      logger.debug { "6. p.class: #{p.class}" } if @debug_enabled
+      
+      # Handle JSON::Any properly
+      hash_p = case p
+              when Hash
+                p
+              else
+                p.as_h  # This should work now
+              end
+      
+      logger.debug { "7. Converted p to hash: #{hash_p.inspect}" } if @debug_enabled
+      logger.debug { "8. hash_p.class: #{hash_p.class}" } if @debug_enabled
+      
+      selected = hash_p.select(
+        "user_id",
+        "user_name",
+        "audio_status state",
+        "video_status has_source",
+        "video_status is_sending",
+        "isCohost",
+        "is_host",
+        "is_in_waiting_room",
+        "hand_status"
+      )
+      logger.debug { "9. Selected result: #{selected.inspect}" } if @debug_enabled
+      selected
+    end
     
-    self[:Participants] = selected_participants.map do |participant|
+    logger.debug { "10. selected_participants: #{selected_participants.inspect}" } if @debug_enabled
+    
+    # THEN transform the keys
+    transformed = selected_participants.map do |participant|
       {
         "user_id" => participant["user_id"],
         "user_name" => participant["user_name"],
@@ -366,6 +392,9 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         "hand_status" => participant["hand_status"]
       }
     end
+    
+    logger.debug { "11. Final transformed: #{transformed.inspect}" } if @debug_enabled
+    self[:Participants] = transformed
   end
 
   private def expose_custom_call_state
