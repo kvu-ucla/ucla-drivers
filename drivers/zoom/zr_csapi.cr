@@ -327,22 +327,69 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     self["ListParticipantsResult"]
   end
 
+      {
+            "audio_status state": "AUDIO_UNMUTED",
+            "audio_status type": "AUDIO_VOIP",
+            "avatar_url": "",
+            "camera_status am_i_controlling": false,
+            "camera_status can_i_request_control": false,
+            "camera_status can_move_camera": false,
+            "camera_status can_switch_camera": false,
+            "camera_status can_zoom_camera": false,
+            "can_edit_closed_caption": false,
+            "can_record": false,
+            "event": "None",
+            "hand_status": {
+                "is_raise_hand": false,
+                "is_valid": "on",
+                "time_stamp": "0"
+            },
+            "isCohost": false,
+            "is_client_support_closed_caption": false,
+            "is_client_support_coHost": false,
+            "is_host": true,
+            "is_in_waiting_room": false,
+            "is_myself": true,
+            "is_recording": false,
+            "is_video_can_mute_byHost": true,
+            "is_video_can_unmute_byHost": true,
+            "local_recording_disabled": true,
+            "user_id": 16778240,
+            "user_name": "Kaplan A26",
+            "user_type": "NORMAL",
+            "video_status has_source": true,
+            "video_status is_receiving": false,
+            "video_status is_sending": true
+        },
+
+  #Expose ListParticipantsResult in a more easily read and usable format
   private def expose_custom_participant_list
     participants = self["ListParticipantsResult"]?
     return unless participants
-    participants_array = participants.as_a
+    
+    # Handle both single object and array cases
+    participants_array = case participants
+                        when Array
+                          participants.as_a
+                        else
+                          [participants]
+                        end
+    
     self[:number_of_participants] = participants_array.size
-    self[:Participants] = participants_array.map { |p| p.as_h.select(
-      "user_id",
-      "user_name",
-      "audio_status state",
-      "video_status has_source",
-      "video_status is_sending",
-      "isCohost",
-      "is_host",
-      "is_in_waiting_room",
-      "hand_status"
-    )}
+    self[:Participants] = participants_array.map do |p|
+      participant = p.as_h
+      {
+        "user_id" => participant["user_id"],
+        "user_name" => participant["user_name"],
+        "audio_state" => participant["audio_status state"]?,
+        "video_has_source" => participant["video_status has_source"]?,
+        "video_is_sending" => participant["video_status is_sending"]?, 
+        "isCohost" => participant["isCohost"],
+        "is_host" => participant["is_host"],
+        "is_in_waiting_room" => participant["is_in_waiting_room"],
+        "hand_status" => participant["hand_status"]
+      }
+    end
   end
 
   private def expose_custom_call_state
