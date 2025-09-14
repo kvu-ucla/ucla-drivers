@@ -22,6 +22,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   getter? ready : Bool = false
   @debug_enabled : Bool = false
   @response_delay : Int32 = 500
+  @current_time : Int64 = Time.utc.to_unix
 
   def on_load
     queue.wait = false
@@ -60,6 +61,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   end
 
   def fetch_initial_state
+    update_current_time
     bookings_update
     call_status
   end 
@@ -76,6 +78,11 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     self["BookingsListResult"]
   end
 
+  def update_current_time
+  @current_time = Time.utc.to_unix;
+  [:meeting_started_time] = @current_time
+  end
+
   # Expose custom booking JSON, filter meetings whose meetingNumber == 0 (invalid)
   # filter meetings whose startTime has already occured
   private def expose_custom_bookings_list
@@ -83,7 +90,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     return unless bookings
     
     # Get current time as unix timestamp for filtering
-    current_unix_time = Time.utc.to_unix
+    update_current_time
     
     self[:Bookings] = bookings.as_a.compact_map { |b| 
       booking_hash = b.as_h
@@ -99,7 +106,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         end_time_unix = Time.parse_iso8601(end_time_iso).to_unix
         
         # Filter out bookings whose start time has already elapsed
-        next if start_time_unix < current_unix_time
+        next if start_time_unix < @current_time
         
         # Filter out entries whose meeting number is "0"
         meeting_number = booking_hash["meetingNumber"]?
@@ -156,6 +163,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send(command, name: "dial_start_pmi")
     sleep @response_delay.milliseconds
     self["Call"]
+
   end
 
   # Input meeting password
