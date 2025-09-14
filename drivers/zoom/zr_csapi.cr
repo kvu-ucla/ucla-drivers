@@ -140,6 +140,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send(command, name: "dial_start")
     sleep @response_delay.milliseconds
     self["Call"]
+    update_current_time
   end
 
   # Join a meeting
@@ -148,6 +149,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send(command, name: "dial_join")
     sleep @response_delay.milliseconds
     self["Call"]
+    update_current_time
   end
 
   # Join meeting via SIP
@@ -155,6 +157,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send("zCommand Dial Join meetingAddress: #{sip_address} protocol: #{protocol}", name: "dial_join_sip")
     sleep @response_delay.milliseconds
     self["Call"]
+    update_current_time
   end
 
   # Start PMI meeting
@@ -163,7 +166,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send(command, name: "dial_start_pmi")
     sleep @response_delay.milliseconds
     self["Call"]
-
+    update_current_time
   end
 
   # Input meeting password
