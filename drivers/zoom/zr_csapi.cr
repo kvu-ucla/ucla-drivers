@@ -89,8 +89,8 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       booking_hash = b.as_h
       
       # Parse ISO 8601 times and convert to unix timestamps
-      start_time_iso = booking_hash["startTime"]?
-      end_time_iso = booking_hash["endTime"]?
+      start_time_iso = booking_hash["startTime"]?.try(&.as_s)
+      end_time_iso = booking_hash["endTime"]?.try(&.as_s)
       
       next unless start_time_iso && end_time_iso
       
