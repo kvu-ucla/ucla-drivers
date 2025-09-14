@@ -330,23 +330,13 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   #Expose ListParticipantsResult in a more easily read and usable format
   private def expose_custom_participant_list
     participants = self["ListParticipantsResult"]?
-    logger.debug { "1. Raw participants: #{participants.inspect}" } if @debug_enabled
     return unless participants
     
-    participants_array = case participants
-                        when Array
-                          participants.as_a
-                        else
-                          [participants]
-                        end
-    
-    logger.debug { "2. participants_array size: #{participants_array.size}" } if @debug_enabled
+    participants_array = participants.as_a
     self[:number_of_participants] = participants_array.size
-    logger.debug { "3. Set number_of_participants to: #{self[:number_of_participants]}" } if @debug_enabled
     
-    # Step 1: Use your working original code to get the data
-    logger.debug { "4. Starting original select step..." } if @debug_enabled
-    original_participants = participants_array.map { |p| p.as_h.select(
+    # selected participants
+    selected_participants = participants_array.map { |p| p.as_h.select(
       "user_id",
       "user_name",
       "audio_status state",
@@ -358,36 +348,20 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       "hand_status"
     )}
     
-    logger.debug { "5. original_participants: #{original_participants.inspect}" } if @debug_enabled
-    logger.debug { "6. original_participants size: #{original_participants.size}" } if @debug_enabled
-    
-    # Step 2: Just rename the keys in a separate step
-    logger.debug { "7. Starting key renaming step..." } if @debug_enabled
-    renamed_participants = original_participants.map do |participant|
-      logger.debug { "8. Processing participant: #{participant.inspect}" } if @debug_enabled
-      
-      # Create new hash with renamed keys
-      renamed = {} of String => JSON::Any
-      renamed["user_id"] = participant["user_id"]
-      renamed["user_name"] = participant["user_name"] 
-      renamed["audio_state"] = participant["audio_status state"]
-      renamed["video_has_source"] = participant["video_status has_source"]
-      renamed["video_is_sending"] = participant["video_status is_sending"]
-      renamed["isCohost"] = participant["isCohost"]
-      renamed["is_host"] = participant["is_host"]
-      renamed["is_in_waiting_room"] = participant["is_in_waiting_room"]
-      renamed["hand_status"] = participant["hand_status"]
-      
-      logger.debug { "9. Renamed participant: #{renamed.inspect}" } if @debug_enabled
-      renamed
+    # transform
+    self[:Participants] = selected_participants.map do |participant|
+      {
+        "user_id" => participant["user_id"],
+        "user_name" => participant["user_name"],
+        "audio_state" => participant["audio_status state"],
+        "video_has_source" => participant["video_status has_source"],
+        "video_is_sending" => participant["video_status is_sending"],
+        "isCohost" => participant["isCohost"],
+        "is_host" => participant["is_host"],
+        "is_in_waiting_room" => participant["is_in_waiting_room"],
+        "hand_status" => participant["hand_status"]
+      }
     end
-    
-    logger.debug { "10. Final renamed_participants: #{renamed_participants.inspect}" } if @debug_enabled
-    logger.debug { "11. Final renamed_participants size: #{renamed_participants.size}" } if @debug_enabled
-    
-    self[:Participants] = renamed_participants
-    logger.debug { "12. self[:Participants] after assignment: #{self[:Participants].inspect}" } if @debug_enabled
-    logger.debug { "13. Available status keys: #{status.keys}" } if @debug_enabled
   end
 
   private def expose_custom_call_state
