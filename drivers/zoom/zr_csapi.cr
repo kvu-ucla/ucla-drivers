@@ -343,48 +343,31 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     logger.debug { "2. participants_array size: #{participants_array.size}" } if @debug_enabled
     self[:number_of_participants] = participants_array.size
     
-    # Handle JSON::Any properly - convert the whole thing to raw Crystal types
-    logger.debug { "3. Starting conversion..." } if @debug_enabled
-    selected_participants = participants_array.map do |p|
+    # Work directly with JSON::Any - don't try to convert to Crystal Hash
+    logger.debug { "3. Starting direct transformation..." } if @debug_enabled
+    transformed = participants_array.map do |p|
       logger.debug { "4. Processing participant p: #{p.inspect}" } if @debug_enabled
       
-      # Convert JSON::Any to a proper Crystal Hash
-      participant_hash = p.as_h.transform_values(&.raw)
-      logger.debug { "5. Converted to Crystal hash: #{participant_hash.inspect}" } if @debug_enabled
-      
-      # Now select the keys we want
-      selected = participant_hash.select(
-        "user_id",
-        "user_name",
-        "audio_status state",
-        "video_status has_source",
-        "video_status is_sending",
-        "isCohost",
-        "is_host",
-        "is_in_waiting_room",
-        "hand_status"
-      )
-      logger.debug { "6. Selected result: #{selected.inspect}" } if @debug_enabled
-      selected
-    end
-    
-    # Transform the keys
-    transformed = selected_participants.map do |participant|
-      {
-        "user_id" => participant["user_id"],
-        "user_name" => participant["user_name"],
-        "audio_state" => participant["audio_status state"],
-        "video_has_source" => participant["video_status has_source"],
-        "video_is_sending" => participant["video_status is_sending"],
-        "isCohost" => participant["isCohost"],
-        "is_host" => participant["is_host"],
-        "is_in_waiting_room" => participant["is_in_waiting_room"],
-        "hand_status" => participant["hand_status"]
+      # Access JSON::Any values directly and convert them as we use them
+      result = {
+        "user_id" => p["user_id"]?.try(&.as_i64?) || p["user_id"]?.try(&.as_i?),
+        "user_name" => p["user_name"]?.try(&.as_s?),
+        "audio_state" => p["audio_status state"]?.try(&.as_s?),
+        "video_has_source" => p["video_status has_source"]?.try(&.as_bool?),
+        "video_is_sending" => p["video_status is_sending"]?.try(&.as_bool?),
+        "isCohost" => p["isCohost"]?.try(&.as_bool?),
+        "is_host" => p["is_host"]?.try(&.as_bool?),
+        "is_in_waiting_room" => p["is_in_waiting_room"]?.try(&.as_bool?),
+        "hand_status" => p["hand_status"]?
       }
+      
+      logger.debug { "5. Transformed result: #{result.inspect}" } if @debug_enabled
+      result
     end
     
-    logger.debug { "7. Final transformed: #{transformed.inspect}" } if @debug_enabled
+    logger.debug { "6. Final transformed array: #{transformed.inspect}" } if @debug_enabled
     self[:Participants] = transformed
+    logger.debug { "7. self[:Participants] after assignment: #{self[:Participants].inspect}" } if @debug_enabled
   end
 
   private def expose_custom_call_state
