@@ -341,27 +341,19 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
                         end
     
     logger.debug { "2. participants_array size: #{participants_array.size}" } if @debug_enabled
-    logger.debug { "3. participants_array content: #{participants_array.inspect}" } if @debug_enabled
     self[:number_of_participants] = participants_array.size
     
-    # First, do exactly what worked before - but handle JSON::Any properly
-    logger.debug { "4. Starting .select() step..." } if @debug_enabled
-    selected_participants = participants_array.map do |p| 
-      logger.debug { "5. Processing participant p: #{p.inspect}" } if @debug_enabled
-      logger.debug { "6. p.class: #{p.class}" } if @debug_enabled
+    # Handle JSON::Any properly - convert the whole thing to raw Crystal types
+    logger.debug { "3. Starting conversion..." } if @debug_enabled
+    selected_participants = participants_array.map do |p|
+      logger.debug { "4. Processing participant p: #{p.inspect}" } if @debug_enabled
       
-      # Handle JSON::Any properly
-      hash_p = case p
-              when Hash
-                p
-              else
-                p.as_h  # This should work now
-              end
+      # Convert JSON::Any to a proper Crystal Hash
+      participant_hash = p.as_h.transform_values(&.raw)
+      logger.debug { "5. Converted to Crystal hash: #{participant_hash.inspect}" } if @debug_enabled
       
-      logger.debug { "7. Converted p to hash: #{hash_p.inspect}" } if @debug_enabled
-      logger.debug { "8. hash_p.class: #{hash_p.class}" } if @debug_enabled
-      
-      selected = hash_p.select(
+      # Now select the keys we want
+      selected = participant_hash.select(
         "user_id",
         "user_name",
         "audio_status state",
@@ -372,13 +364,11 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         "is_in_waiting_room",
         "hand_status"
       )
-      logger.debug { "9. Selected result: #{selected.inspect}" } if @debug_enabled
+      logger.debug { "6. Selected result: #{selected.inspect}" } if @debug_enabled
       selected
     end
     
-    logger.debug { "10. selected_participants: #{selected_participants.inspect}" } if @debug_enabled
-    
-    # THEN transform the keys
+    # Transform the keys
     transformed = selected_participants.map do |participant|
       {
         "user_id" => participant["user_id"],
@@ -393,7 +383,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       }
     end
     
-    logger.debug { "11. Final transformed: #{transformed.inspect}" } if @debug_enabled
+    logger.debug { "7. Final transformed: #{transformed.inspect}" } if @debug_enabled
     self[:Participants] = transformed
   end
 
