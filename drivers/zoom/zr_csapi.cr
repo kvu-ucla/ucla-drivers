@@ -80,7 +80,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
 
   def update_current_time
   @current_time = Time.utc.to_unix;
-  [:meeting_started_time] = @current_time
+  self[:meeting_started_time] = @current_time
   end
 
   # Expose custom booking JSON, filter meetings whose meetingNumber == 0 (invalid)
