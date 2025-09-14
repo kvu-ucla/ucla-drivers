@@ -76,16 +76,48 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     self["BookingsListResult"]
   end
 
+  # Expose custom booking JSON, filtered by removing invalid meetings 
+  # and meetings after the current time
   private def expose_custom_bookings_list
     bookings = self["BookingsListResult"]?
     return unless bookings
-    self[:Bookings] = bookings.as_a.map { |b| b.as_h.select(
-      "creatorName",
-      "startTime",
-      "endTime",
-      "meetingName",
-      "meetingNumber"
-    )}
+    
+    # Get current time as unix timestamp for filtering
+    current_unix_time = Time.utc.to_unix
+    
+    self[:Bookings] = bookings.as_a.compact_map { |b| 
+      booking_hash = b.as_h
+      
+      # Parse ISO 8601 times and convert to unix timestamps
+      start_time_iso = booking_hash["startTime"]?.try(&.as_s)
+      end_time_iso = booking_hash["endTime"]?.try(&.as_s)
+      
+      next unless start_time_iso && end_time_iso
+      
+      begin
+        start_time_unix = Time.parse_iso8601(start_time_iso).to_unix
+        end_time_unix = Time.parse_iso8601(end_time_iso).to_unix
+        
+        # Filter out bookings whose start time has already elapsed
+        next if start_time_unix < current_unix_time
+        
+        # Filter out entries whose meeting number is 0
+        meeting_number = booking_hash["meetingNumber"]?
+        next if meeting_number.try(&.as_i) == 0
+        
+        # Return booking with converted unix timestamps
+        {
+          "creatorName" => booking_hash["creatorName"]?,
+          "startTime" => start_time_unix,
+          "endTime" => end_time_unix,
+          "meetingName" => booking_hash["meetingName"]?,
+          "meetingNumber" => booking_hash["meetingNumber"]?
+        }
+      rescue Time::Format::Error
+        # Skip bookings with invalid time formats
+        next
+      end
+    }.compact
   end
 
   # Update/refresh the meeting list from calendar
