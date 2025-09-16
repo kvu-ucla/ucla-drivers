@@ -84,7 +84,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   end
 
   # Expose custom booking JSON, filter meetings whose meetingNumber == 0 (invalid)
-  # filter meetings whose startTime has already occured
+  # filter meetings whose endTime has already passed (completely finished)
   private def expose_custom_bookings_list
     bookings = self["BookingsListResult"]?
     return unless bookings
@@ -106,7 +106,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         end_time_unix = Time.parse_iso8601(end_time_iso).to_unix
         
         # Filter out bookings whose start time has already elapsed
-        next if start_time_unix < @current_time
+        next if end_time_unix < @current_time
         
         # Filter out entries whose meeting number is "0"
         meeting_number = booking_hash["meetingNumber"]?
