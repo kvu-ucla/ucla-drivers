@@ -184,10 +184,16 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send("zCommand Call Invite user: #{user}", name: "call_invite")
   end
 
-  # Mute/unmute specific participant
-  def call_mute_participant(mute : Bool, participant_id : String)
+  # Mute/unmute specific participant audio
+  def call_mute_participant_audio (mute : Bool, participant_id : String)
     state = mute ? "on" : "off"
-    do_send("zCommand Call MuteParticipant mute: #{state} Id: #{participant_id}", name: "call_mute_participant")
+    do_send("zCommand Call MuteParticipant mute: #{state} Id: #{participant_id}", name: "call_mute_participant_audio")
+  end
+
+    # Mute/unmute specific participant video
+  def call_mute_participant_video (mute : Bool, participant_id : String)
+    state = mute ? "on" : "off"
+    do_send("zCommand Call MuteParticipantVideo mute: #{state} Id: #{participant_id}", name: "call_mute_participant_video")
   end
 
   # Mute/unmute all participants
