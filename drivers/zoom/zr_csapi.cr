@@ -139,36 +139,44 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     }.compact
   end
 
-    # determine current booking, i.e. booking that is closest to current time
-  private def determine_current_booking(bookings : Array(JSON::Any))
+  # determine current booking, i.e. booking that is closest to current time
+  private def determine_current_booking(bookings : Array(Hash(String, JSON::Any)))
     if bookings.empty?
       self[:current_booking] = nil
       self[:booking_in_progress] = false
       return
     end
     current_booking = bookings.find do |booking|
-      is_instant_meeting = booking["isInstantMeeting"]
-      next if is_instant_meeting
-      booking["startTime"].as_i64 <= @current_time && booking["endTime"].as_i64 > @current_time
+      next if booking["isInstantMeeting"] == true
+      booking["startTime"] > @current_time 
     end
     
-    self[:current_booking] = current_booking || nil
+    self[:current_booking] = current_booking
     self[:booking_in_progress] = !current_booking.nil?
   end
 
   # determine next booking, i.e. booking that is directly after current booking
   # assumes the Zoom bookings are sorted by start time, which the case after transforming
-  private def determine_next_booking(bookings : Array(JSON::Any))
+  private def determine_next_booking(bookings : Array(Hash(String, JSON::Any)))
     if bookings.empty?
       self[:next_booking] = nil
       return
     end
-    next_booking = bookings.find do |booking|
-      is_instant_meeting = booking["isInstantMeeting"]
-      next if is_instant_meeting
-      booking["startTime"].as_i64 > @current_time
+    
+    current_booking = self[:current_booking]?
+    
+    if current_booking
+      # Find the meeting that starts after current booking
+      current_start_time = current_booking["startTime"]
+      next_booking = bookings.find do |booking|
+        next if booking["isInstantMeeting"] == true
+        booking["startTime"].as(Int64) > current_start_time
+      end
+    else
+      next_booking = nil
     end
-    self[:next_booking] = next_booking || nil
+    
+    self[:next_booking] = next_booking
   end
 
   #determine the if the booking is active and in call, either instant or from schedule
