@@ -35,8 +35,10 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     @debug_enabled = setting?(Bool, :enable_debug_logging) || false
     @response_delay = setting?(Int32, :milliseconds_until_response) || 500
     
+    schedule.clear
     schedule.cron("* * * * *") do
       schedule.in(rand(1000).milliseconds) do
+        logger.debug { "tick tock" }
         @current_time = Time.utc.to_unix
         if list = self[:Bookings]?
           determine_current_booking(list.as_a)
@@ -140,7 +142,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   end
 
   # determine current booking, i.e. booking that is closest to current time
-  private def determine_current_booking(bookings : Array(Hash(String, JSON::Any)))
+  private def determine_current_booking(bookings : Array(JSON::Any))
     if bookings.empty?
       self[:current_booking] = nil
       self[:booking_in_progress] = false
@@ -157,7 +159,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
 
   # determine next booking, i.e. booking that is directly after current booking
   # assumes the Zoom bookings are sorted by start time, which the case after transforming
-  private def determine_next_booking(bookings : Array(Hash(String, JSON::Any)))
+  private def determine_next_booking(bookings : Array(JSON::Any))
     if bookings.empty?
       self[:next_booking] = nil
       return
