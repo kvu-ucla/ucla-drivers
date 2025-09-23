@@ -813,7 +813,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       end
     when "InfoResult"
       if bookings = self[:Bookings]?
-        determine_active_booking(bookings)
+        determine_active_booking(bookings.as_a)
       end  
     end
 
