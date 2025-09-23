@@ -23,6 +23,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   @debug_enabled : Bool = false
   @response_delay : Int32 = 500
   @current_time : Int64 = Time.utc.to_unix
+  @connection_timeout_schedule : PlaceOS::Driver::Proxy::Scheduler::TaskWrapper? = nil
 
   def on_load
     queue.wait = false
@@ -62,7 +63,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     #   initialize_tokenizer unless @ready || @init_called
     # end
     # we need to disconnect if we don't see welcome message
-    schedule.in(9.seconds) do
+    @connection_timeout_schedule = schedule.in(9.seconds) do
       if !ready?
         logger.error { "ZR-CSAPI connection failed to be ready after 9 seconds." }
         disconnect
@@ -75,7 +76,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   def disconnected
     reset_connection_flags
     queue.clear abort_current: true
-    schedule.clear
+    @connection_timeout_schedule.try &.cancel
     logger.debug { "Disconnected from Zoom Room ZR-CSAPI" }
     self[:connected] = false
   end
@@ -762,10 +763,9 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     unless ready?
       if response.includes?("ZAAPI") # Initial connection message
         queue.clear abort_current: true
+        @connection_timeout_schedule.try &.cancel
         do_send("echo off", name: "echo_off")
-        schedule.clear
         do_send("format json", name: "set_format")
-        schedule.clear
         initialize_tokenizer unless @init_called
         fetch_initial_state
       else
