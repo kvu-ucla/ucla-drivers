@@ -162,7 +162,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     end
     current_booking = bookings.find do |booking|
       next if booking["isInstantMeeting"] == true
-      booking["startTime"].as_i64 > @current_time
+      booking["startTime"].as_i64 > @current_time && booking["endTime"].as_i64 > @current_time
     end
 
     self[:current_booking] = current_booking
@@ -170,24 +170,16 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   end
 
   # determine next booking, i.e. booking that is directly after current booking
-  # assumes the Zoom bookings are sorted by start time, which the case after transforming
+  # assumes the Zoom bookings are sorted by start time, which is the case after transforming
   def determine_next_booking(bookings : Array(JSON::Any))
     if bookings.empty?
       self[:next_booking] = nil
       return
     end
 
-    current_booking = self[:current_booking]?
-
-    if current_booking
-      # Find the meeting that starts after current booking
-      current_start_time = current_booking["startTime"].as_i64
-      next_booking = bookings.find do |booking|
-        next if booking["isInstantMeeting"] == true
-        booking["startTime"].as_i64 > current_start_time
-      end
-    else
-      next_booking = nil
+    next_booking = bookings.find do |booking|
+      next if booking["isInstantMeeting"] == true
+      booking["startTime"].as_i64 > @current_time
     end
 
     self[:next_booking] = next_booking
