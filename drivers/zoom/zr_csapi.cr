@@ -41,7 +41,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         if list = self[:Bookings]?
           determine_current_booking(list.as_a)
           determine_next_booking(list.as_a)
-          determine_active_booking(list_as_a)
+          determine_active_booking(list.as_a)
         end
       end
     end
