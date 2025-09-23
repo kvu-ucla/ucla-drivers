@@ -49,6 +49,16 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     end
   end
 
+  def test_determine_functions
+    logger.debug { "Manual test" }
+    @current_time = Time.utc.to_unix
+    if list = self[:Bookings]?
+      determine_current_booking(list.as_a)
+      determine_next_booking(list.as_a) 
+      determine_active_booking(list.as_a)
+    end
+  end
+
   def connected
     reset_connection_flags
     # schedule.in(5.seconds) do
