@@ -34,6 +34,18 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   def on_update
     @debug_enabled = setting?(Bool, :enable_debug_logging) || false
     @response_delay = setting?(Int32, :milliseconds_until_response) || 500
+    
+    schedule.cron("* * * * *") do
+      schedule.in(rand(1000).milliseconds) do
+        @current_time = Time.utc.to_unix
+        if list = self[:Bookings]?
+          determine_current_booking(list.as_a)
+          determine_next_booking(list.as_a)
+          determine_active_booking(list_as_a)
+        end
+      end
+    end
+
   end
 
   def connected
@@ -79,13 +91,11 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
   end
 
   def update_current_time
-  @current_time = Time.utc.to_unix;
-  self[:meeting_started_time] = @current_time
+  self[:current_time] = @current_time
   end
 
   # Expose custom booking JSON, filter meetings whose meetingNumber == 0 (invalid)
   # filter meetings whose endTime has already passed (completely finished)
-  
   private def expose_custom_bookings_list
     bookings = self["BookingsListResult"]?
     return unless bookings
@@ -96,7 +106,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     self[:Bookings] = bookings.as_a.compact_map { |b| 
       booking_hash = b.as_h
       
-      # Parse ISO 8601 times and convert to unix timestamps
+      # convert from ISO8601 to unix timestamps, check if has valid end and start times before processing
       start_time_iso = booking_hash["startTime"]?.try(&.as_s)
       end_time_iso = booking_hash["endTime"]?.try(&.as_s)
       
@@ -106,10 +116,10 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         start_time_unix = Time.parse_iso8601(start_time_iso).to_unix
         end_time_unix = Time.parse_iso8601(end_time_iso).to_unix
         
-        # Filter out bookings whose start time has already elapsed
+        # Filter out bookings whose end time has already elapsed
         next if end_time_unix < @current_time
         
-        # Filter out entries whose meeting number is "0"
+        # Filter out entries whose meeting number is "0" (i.e. meetings from Outlook that have no Zoom meeting)
         meeting_number = booking_hash["meetingNumber"]?
         next if meeting_number == "0"
         
@@ -119,13 +129,68 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
           "startTime" => start_time_unix,
           "endTime" => end_time_unix,
           "meetingName" => booking_hash["meetingName"]?,
-          "meetingNumber" => booking_hash["meetingNumber"]?
+          "meetingNumber" => booking_hash["meetingNumber"]?,
+          "isInstantMeeting" => booking_hash["isInstantMeeting"]?
         }
       rescue Time::Format::Error
         # Skip bookings with invalid time formats
         next
       end
     }.compact
+  end
+
+    # determine current booking, i.e. booking that is closest to current time
+  private def determine_current_booking(bookings : Array(JSON::Any))
+    if bookings.empty?
+      self[:current_booking] = nil
+      self[:booking_in_progress] = false
+      return
+    end
+    current_booking = bookings.find do |booking|
+      is_instant_meeting = booking["isInstantMeeting"]
+      next if is_instant_meeting
+      booking["startTime"].as_i64 <= @current_time && booking["endTime"].as_i64 > @current_time
+    end
+    
+    self[:current_booking] = current_booking || nil
+    self[:booking_in_progress] = !current_booking.nil?
+  end
+
+  # determine next booking, i.e. booking that is directly after current booking
+  # assumes the Zoom bookings are sorted by start time, which the case after transforming
+  private def determine_next_booking(bookings : Array(JSON::Any))
+    if bookings.empty?
+      self[:next_booking] = nil
+      return
+    end
+    next_booking = bookings.find do |booking|
+      is_instant_meeting = booking["isInstantMeeting"]
+      next if is_instant_meeting
+      booking["startTime"].as_i64 > @current_time
+    end
+    self[:next_booking] = next_booking || nil
+  end
+
+  #determine the if the booking is active and in call, either instant or from schedule
+  private def determine_active_booking(bookings : Array(JSON::Any))
+    if bookings.empty?
+      self[:active_booking] = nil
+      return
+    end
+
+    # Get the current meeting id during active call
+    active_meeting_id = self["InfoResult"]["meeting_id"]?
+    
+    if active_meeting_id
+      # Find the booking that matches the active meeting
+      active_booking = bookings.find do |booking|
+        booking["meetingNumber"] == active_meeting_id
+      end
+      
+      self[:active_booking] = active_booking
+    else
+      self[:active_booking] = nil
+    end
   end
 
   # Update/refresh the meeting list from calendar
@@ -141,7 +206,6 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send(command, name: "dial_start")
     sleep @response_delay.milliseconds
     self["Call"]
-    bookings_list
   end
 
   # Join a meeting
@@ -150,7 +214,6 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send(command, name: "dial_join")
     sleep @response_delay.milliseconds
     self["Call"]
-    bookings_list
   end
 
   # Join meeting via SIP
@@ -158,16 +221,14 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     do_send("zCommand Dial Join meetingAddress: #{sip_address} protocol: #{protocol}", name: "dial_join_sip")
     sleep @response_delay.milliseconds
     self["Call"]
-    bookings_list
   end
 
   # Start PMI meeting
-  def dial_start_pmi(duration_minutes : Int32 = 15)
+  def dial_start_pmi(duration_minutes : Int32 = 1)
     command = "zCommand Dial StartPmi Duration: #{duration_minutes}"
     do_send(command, name: "dial_start_pmi")
     sleep @response_delay.milliseconds
     self["Call"]
-    bookings_list
   end
 
   # Input meeting password
@@ -371,7 +432,6 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
 
   # Get participant list
   def call_list_participants
-    logger.debug { "=== CALLING call_list_participants ===" }
     do_send("zCommand Call ListParticipants", name: "call_participants")
     sleep @response_delay.milliseconds
     self["ListParticipantsResult"]
@@ -414,6 +474,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
     end
   end
 
+  # custom call state for call status, mic mute status, cam status
   private def expose_custom_call_state
     return unless call = self[:Call]
     
@@ -713,6 +774,7 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
       self[response_topkey] = json_response[response_topkey]
     end
 
+    # topkey response
     case response_topkey
     when "Call"
       expose_custom_call_state
@@ -723,37 +785,39 @@ class Zoom::ZrCSAPI < PlaceOS::Driver
         
         # Handle different data structures correctly
         if list.as_a?
-          # It's an array (manual query response) - get event from first participant
+          # if response is array, use first participant
           first_participant = list.as_a.first?
           if first_participant && first_participant.as_h?
             event_value = first_participant.as_h["event"]?
             event = event_value.try(&.as_s) if event_value
           end
         elsif list.as_h?
-          # It's a single hash (automatic event) - get event directly
+          # It's a single hash (automatic event), get event directly
           event_value = list.as_h["event"]?
           event = event_value.try(&.as_s) if event_value
         end
         
-        logger.info { "Final event: #{event}" }
         
-        # Handle the event properly
+        # Event is either None or ZRCUSerChangedEvent, indicating a change
         if event == "None" && list.as_a?
           # Manual query response - process the participant list
           logger.info { "Processing manual query response" }
           expose_custom_participant_list
         elsif event && event.starts_with?("ZRCUserChangedEvent")
-          # Automatic event - trigger fresh query
-          logger.info { "Triggering auto-refresh for: #{event}" }
+          # refresh
           call_list_participants
         end
         
       rescue ex
         logger.error { "Error processing ListParticipantsResult: #{ex.message}" }
       end
+    when "InfoResult"
+      if bookings = self[:Bookings]?
+        determine_active_booking(bookings)
+      end  
     end
 
-    # Perform additional actions
+    # other response types
     case response_type
     when "zEvent"
       case response_topkey
