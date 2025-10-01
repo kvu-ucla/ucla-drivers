@@ -22,8 +22,8 @@ class Sony::Camera::CGI < PlaceOS::Driver
     presets:         {
       name: {pan: 1, tilt: 1, zoom: 1},
     },
-    enable_debug_logging: false,
-    poll_interval_in_minutes: 5
+    enable_debug_logging:     false,
+    poll_interval_in_minutes: 5,
   })
 
   enum Movement
@@ -33,20 +33,20 @@ class Sony::Camera::CGI < PlaceOS::Driver
   end
 
   enum MovementDirection
-  Up
-  Down
-  Left
-  Right
-  UpLeft
-  UpRight
-  DownLeft
-  DownRight
-  Tele
-  Wide
+    Up
+    Down
+    Left
+    Right
+    UpLeft
+    UpRight
+    DownLeft
+    DownRight
+    Tele
+    Wide
 
-    # Convert enum name to the format the API expects, i.e. compound directions need a - 
+    # Convert enum name to the format the API expects, i.e. compound directions need a -
     def to_api : String
-      to_s.gsub(/([a-z])([A-Z])/, "\\1-\\2").downcase
+      to_s.underscore.gsub('_', '-')
     end
   end
 
@@ -101,6 +101,13 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
+  @connected_state : Bool = true
+
+  protected def set_connected_state(state : Bool)
+    current_state = @connected_state
+    @connected_state = state
+    queue.set_connected(state) if state != current_state
+  end
   private def authenticate_if_needed(path : String)
     return unless @auth_challenge.empty?
 
@@ -108,12 +115,19 @@ class Sony::Camera::CGI < PlaceOS::Driver
     response = http("GET", path)
     if response.status_code == 401 && (challenge = response.headers["WWW-Authenticate"]?)
       @auth_challenge = challenge
+    elsif response.status_code == 502
+      set_connected_state(false)
+      raise "hardware issue, power cycle required"
     else
-      raise "Failed to get digest auth challenge: #{response.status_code}"
+      raise "request failed with: #{response.status_code}"
     end
   end
 
-  private def get_with_digest_auth(path : String, headers : HTTP::Headers? = nil)
+  private def get_with_digest_auth(path : String, headers : HTTP::Headers? = nil, retry : Int32 = 0)
+    if retry >= 2
+      set_connected_state(false)
+      raise "authentication failure"
+    end
     authenticate_if_needed(path)
 
     uri = URI.parse(config.uri.not_nil! + path)
@@ -126,11 +140,19 @@ class Sony::Camera::CGI < PlaceOS::Driver
     request_headers["Authorization"] = auth_header
 
     response = get(path, headers: request_headers)
-    if response.status_code == 401
+    case response.status_code
+    when 502
+      set_connected_state(false)
+      raise "hardware issue, power cycle required"
+    when 401
       # Auth failed, clear challenge to re-authenticate next time
       @auth_challenge = ""
-      get_with_digest_auth(path)
+      @digest_auth = HTTP::Client::DigestAuth.new
+
+      # ensure we don't loop infinitely here (single retry)
+      get_with_digest_auth(path, retry: retry + 1)
     else
+      set_connected_state(true)
       response
     end
   end
@@ -304,21 +326,21 @@ class Sony::Camera::CGI < PlaceOS::Driver
     when MovementDirection::UpRight   then MovementDirection::DownRight
     when MovementDirection::DownLeft  then MovementDirection::UpLeft
     when MovementDirection::DownRight then MovementDirection::UpRight
-    else dir  # Tele, Wide, Left, Right unchanged
+    else                                   dir # Tele, Wide, Left, Right unchanged
     end
   end
 
+  # move 8 way direction
   def move_all(position : MovementDirection, index : Int32 | String = 0)
     # indexes start at 1 on sony cameras
     index = index.to_i + 1
 
-    # apply “invert controls” if enabled
     dir = @invert_controls ? invert_vertical(position) : position
 
     case dir
     when MovementDirection::Up, MovementDirection::Down, MovementDirection::Left, MovementDirection::Right,
-        MovementDirection::UpLeft, MovementDirection::UpRight, MovementDirection::DownLeft, MovementDirection::DownRight,
-        MovementDirection::Tele, MovementDirection::Wide
+         MovementDirection::UpLeft, MovementDirection::UpRight, MovementDirection::DownLeft, MovementDirection::DownRight,
+         MovementDirection::Tele, MovementDirection::Wide
       action("/command/ptzf.cgi?Move=#{dir.to_api},0,image#{index}",
         name: "moving",
         priority: queue.priority + 50,
@@ -328,13 +350,12 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
-  #stop zooming in/out
+  # stop zooming in/out
   def stop_zoom
-          action("/command/ptzf.cgi?Move=stop,zoom",
-        name: "position"
+    action("/command/ptzf.cgi?Move=stop,zoom",
+      name: "position"
     ) { }
-  end  
-
+  end
 
   macro in_range(range, value)
     {{value}} = if {{range}}.includes? {{value}}
@@ -344,8 +365,6 @@ class Sony::Camera::CGI < PlaceOS::Driver
                 end
     {{value}} = twos_complement({{value}})
   end
-
-  
 
   def pantilt(pan : Int32, tilt : Int32, zoom : Int32? = nil, focus : Int32? = nil) : Nil
     in_range @pan_range, pan
@@ -443,23 +462,23 @@ class Sony::Camera::CGI < PlaceOS::Driver
     end
   end
 
-  #save preset directly to camera
-  def cam_preset_save (preset_no : Int32)
-      action("/command/presetposition.cgi?PresetSet=#{preset_no},0,off",
-        name: "position"
+  # save preset directly to camera
+  def cam_preset_save(preset_no : Int32)
+    action("/command/presetposition.cgi?PresetSet=#{preset_no},0,off",
+      name: "position"
     ) { }
   end
 
-  #recall preset directly from camera
-  def cam_preset_recall (preset_no : Int32)
-      action("/command/presetposition.cgi?PresetCall=#{preset_no}",
-        name: "position"
+  # recall preset directly from camera
+  def cam_preset_recall(preset_no : Int32)
+    action("/command/presetposition.cgi?PresetCall=#{preset_no}",
+      name: "position"
     ) { }
   end
 
   def save_position(name : String, index : Int32 | String = 0)
     @presets[name] = {
-      pan: @pan, tilt: @tilt, zoom: @zoom_raw, focus: @focus_raw
+      pan: @pan, tilt: @tilt, zoom: @zoom_raw, focus: @focus_raw,
     }
     define_setting(:presets, @presets)
     self[:presets] = @presets.keys
@@ -471,10 +490,10 @@ class Sony::Camera::CGI < PlaceOS::Driver
     self[:presets] = @presets.keys
   end
 
-    #autoframing toggle and status query
+  # autoframing toggle and status query
   def autoframe(state : Bool)
     action("/analytics/ptzautoframing.cgi?PtzAutoFraming=#{state ? "on" : "off"}",
-    name: "auto-framing"
+      name: "auto-framing"
     ) { autoframing? }
   end
 
@@ -482,7 +501,7 @@ class Sony::Camera::CGI < PlaceOS::Driver
     autoframe_status : String? = nil
     query("/command/inquiry.cgi?inq=ptzautoframing", priority: 0) do |response|
       autoframe_status = response["PtzAutoFraming"]?
-    end  
+    end
     return nil unless autoframe_status
     self[:autoframe] = autoframe_status == "on" # device returns "on" or "off"
   end
