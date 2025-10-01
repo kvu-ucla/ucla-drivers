@@ -5,6 +5,7 @@ require "http-client-digest_auth"
 
 # Documentation: https://aca.im/driver_docs/Sony/sony-camera-CGI-Commands-1.pdf
 
+
 class Sony::Camera::CGI < PlaceOS::Driver
   # include Interface::Powerable
   include Interface::Camera
